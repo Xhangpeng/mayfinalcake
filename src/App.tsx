@@ -2197,7 +2197,7 @@ const AdminDashboard = ({
   );
 };
 
-const DELIVERY_TIME_OPTIONS = ['09:00', '11:00', '13:00', '15:00', '17:00', '19:00'];
+const DELIVERY_TIME_OPTIONS = ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00'];
 const MIN_DELIVERY_NOTICE_HOURS = 6;
 
 const formatLocalDate = (date: Date) => {
@@ -2212,6 +2212,12 @@ const createLocalDateTime = (dateStr: string, time: string) => {
   const [hours, minutes] = time.split(':').map(Number);
   return new Date(year, month - 1, day, hours, minutes, 0, 0);
 };
+
+const formatDeliverySlotLabel = (time: string) =>
+  new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    hour12: true
+  });
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
@@ -2289,88 +2295,103 @@ export default function App() {
     [checkoutReferenceTime]
   );
   const todayDateString = formatLocalDate(checkoutReferenceTime);
-  const deliveryDateOptions = useMemo(() => (
-    Array.from({ length: 14 }, (_, index) => {
-      const date = new Date(checkoutReferenceTime);
-      date.setHours(0, 0, 0, 0);
-      date.setDate(date.getDate() + index);
-      return {
-        date,
-        dateStr: formatLocalDate(date)
-      };
-    })
-  ), [checkoutReferenceTime]);
+  const tomorrowDateString = useMemo(() => {
+    const tomorrow = new Date(checkoutReferenceTime);
+    tomorrow.setHours(0, 0, 0, 0);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return formatLocalDate(tomorrow);
+  }, [checkoutReferenceTime]);
 
-  const getAvailableDeliveryTimes = (dateStr: string) => (
-    DELIVERY_TIME_OPTIONS.filter((time) => createLocalDateTime(dateStr, time).getTime() >= minimumDeliveryDateTime.getTime())
-  );
-
-  const nextAvailableDeliverySlot = useMemo(() => {
-    for (const option of deliveryDateOptions) {
-      const availableTimes = getAvailableDeliveryTimes(option.dateStr);
-      if (availableTimes.length > 0) {
-        return {
-          dateStr: option.dateStr,
-          time: availableTimes[0]
-        };
-      }
-    }
-    return null;
-  }, [deliveryDateOptions, minimumDeliveryDateTime]);
-
-  const selectedDateAvailableTimes = useMemo(
-    () => getAvailableDeliveryTimes(deliveryDetails.deliveryDate),
-    [deliveryDetails.deliveryDate, minimumDeliveryDateTime]
-  );
   const todayAvailableTimes = useMemo(
-    () => getAvailableDeliveryTimes(todayDateString),
+    () => DELIVERY_TIME_OPTIONS.filter((time) => createLocalDateTime(todayDateString, time).getTime() >= minimumDeliveryDateTime.getTime()),
     [todayDateString, minimumDeliveryDateTime]
   );
-  const todayHasRestrictedSlots = todayAvailableTimes.length < DELIVERY_TIME_OPTIONS.length;
+  const tomorrowAvailableTimes = useMemo(
+    () => DELIVERY_TIME_OPTIONS,
+    []
+  );
+  const hasTodaySlots = todayAvailableTimes.length > 0;
+  const availableDayOptions = useMemo(() => {
+    const options: Array<{ id: 'today' | 'tomorrow'; label: string; dateStr: string }> = [];
+    if (hasTodaySlots) {
+      options.push({ id: 'today', label: 'Today', dateStr: todayDateString });
+    }
+    options.push({ id: 'tomorrow', label: 'Tomorrow', dateStr: tomorrowDateString });
+    return options;
+  }, [hasTodaySlots, todayDateString, tomorrowDateString]);
+
+  const earliestAvailableSlot = useMemo(() => {
+    if (todayAvailableTimes.length > 0) {
+      return { dayLabel: 'Today', dateStr: todayDateString, time: todayAvailableTimes[0] };
+    }
+    return { dayLabel: 'Tomorrow', dateStr: tomorrowDateString, time: tomorrowAvailableTimes[0] };
+  }, [todayAvailableTimes, todayDateString, tomorrowAvailableTimes, tomorrowDateString]);
+
+  const selectedDateBaseAvailableTimes = useMemo(() => (
+    deliveryDetails.deliveryDate === todayDateString ? todayAvailableTimes : tomorrowAvailableTimes
+  ), [deliveryDetails.deliveryDate, todayAvailableTimes, todayDateString, tomorrowAvailableTimes]);
+
+  const selectedTimeFloor = selectedDateBaseAvailableTimes.includes(deliveryDetails.deliveryTime)
+    ? deliveryDetails.deliveryTime
+    : selectedDateBaseAvailableTimes[0];
+
+  const selectableDeliveryTimes = useMemo(
+    () => selectedDateBaseAvailableTimes.filter((time) => time >= selectedTimeFloor),
+    [selectedDateBaseAvailableTimes, selectedTimeFloor]
+  );
 
   useEffect(() => {
-    if (!isOrderModalOpen || !nextAvailableDeliverySlot) return;
+    if (!isOrderModalOpen) return;
 
-    if (selectedDateAvailableTimes.includes(deliveryDetails.deliveryTime)) return;
+    const allowedDates = new Set(availableDayOptions.map((option) => option.dateStr));
+    const nextDate = allowedDates.has(deliveryDetails.deliveryDate)
+      ? deliveryDetails.deliveryDate
+      : earliestAvailableSlot.dateStr;
+    const nextBaseTimes = nextDate === todayDateString ? todayAvailableTimes : tomorrowAvailableTimes;
+    const nextTime = nextBaseTimes.includes(deliveryDetails.deliveryTime)
+      ? deliveryDetails.deliveryTime
+      : nextBaseTimes[0];
 
-    if (selectedDateAvailableTimes.length > 0) {
-      setDeliveryDetails((prev) => ({
-        ...prev,
-        deliveryTime: selectedDateAvailableTimes[0]
-      }));
-      return;
-    }
+    if (deliveryDetails.deliveryDate === nextDate && deliveryDetails.deliveryTime === nextTime) return;
 
     setDeliveryDetails((prev) => ({
       ...prev,
-      deliveryDate: nextAvailableDeliverySlot.dateStr,
-      deliveryTime: nextAvailableDeliverySlot.time
+      deliveryDate: nextDate,
+      deliveryTime: nextTime
     }));
   }, [
     deliveryDetails.deliveryDate,
     deliveryDetails.deliveryTime,
     isOrderModalOpen,
-    nextAvailableDeliverySlot,
-    selectedDateAvailableTimes
+    availableDayOptions,
+    earliestAvailableSlot.dateStr,
+    todayAvailableTimes,
+    todayDateString,
+    tomorrowAvailableTimes
   ]);
 
-  const deliveryTimingMessage = useMemo(() => {
-    if (!isOrderModalOpen || !todayHasRestrictedSlots) return '';
+  const deliveryScheduleMessages = useMemo(() => {
+    const messages: string[] = [];
 
-    if (todayAvailableTimes.length === 0 && nextAvailableDeliverySlot) {
-      const nextAvailableLabel = new Date(`2000-01-01T${nextAvailableDeliverySlot.time}`).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      });
-      return `Today is unavailable because orders need at least ${MIN_DELIVERY_NOTICE_HOURS} hours of preparation. The next available slot is ${nextAvailableDeliverySlot.dateStr} at ${nextAvailableLabel}. If you need it before then, you will get a message.`;
+    if (!hasTodaySlots) {
+      messages.push('No slots available today. Showing tomorrow.');
     }
 
-    return `Orders need at least ${MIN_DELIVERY_NOTICE_HOURS} hours of preparation. Earlier slots for today are disabled. If you need it before then, you will get a message.`;
+    messages.push(`Earliest available delivery: ${earliestAvailableSlot.dayLabel}, ${formatDeliverySlotLabel(earliestAvailableSlot.time)}`);
+
+    if (hasTodaySlots && todayAvailableTimes.length === 1) {
+      messages.push('Last available slot today.');
+    }
+
+    if (hasTodaySlots && todayAvailableTimes.length < DELIVERY_TIME_OPTIONS.length) {
+      messages.push(`Orders need at least ${MIN_DELIVERY_NOTICE_HOURS} hours of preparation. If you need it before then, you will get a message.`);
+    }
+
+    return messages;
   }, [
-    isOrderModalOpen,
-    nextAvailableDeliverySlot,
-    todayHasRestrictedSlots,
+    earliestAvailableSlot.dayLabel,
+    earliestAvailableSlot.time,
+    hasTodaySlots,
     todayAvailableTimes.length
   ]);
 
@@ -2651,7 +2672,22 @@ export default function App() {
       return;
     }
     const checkoutNow = new Date();
+    const checkoutToday = formatLocalDate(checkoutNow);
+    const checkoutTomorrowDate = new Date(checkoutNow);
+    checkoutTomorrowDate.setHours(0, 0, 0, 0);
+    checkoutTomorrowDate.setDate(checkoutTomorrowDate.getDate() + 1);
+    const checkoutTomorrow = formatLocalDate(checkoutTomorrowDate);
+    const checkoutEarliest = new Date(checkoutNow.getTime() + MIN_DELIVERY_NOTICE_HOURS * 60 * 60 * 1000);
+    const checkoutTodaySlots = DELIVERY_TIME_OPTIONS.filter((time) => createLocalDateTime(checkoutToday, time).getTime() >= checkoutEarliest.getTime());
+    const defaultDate = checkoutTodaySlots.length > 0 ? checkoutToday : checkoutTomorrow;
+    const defaultTime = checkoutTodaySlots.length > 0 ? checkoutTodaySlots[0] : DELIVERY_TIME_OPTIONS[0];
     setCheckoutReferenceTime(checkoutNow);
+    setDeliveryDetails((prev) => ({
+      ...prev,
+      deliveryDate: defaultDate,
+      deliveryTime: defaultTime
+    }));
+    setFormErrors({});
     if (method) setPaymentMethod(method);
     setIsCartOpen(false);
     setIsOrderModalOpen(true);
@@ -4067,78 +4103,62 @@ export default function App() {
                   <h4 className="text-[10px] font-bold text-emerald-deep uppercase tracking-[0.25em]">Schedule</h4>
                 </div>
                 
-                <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar-horizontal">
-                  {deliveryDateOptions.map(({ date, dateStr }) => {
-                    const isSelected = deliveryDetails.deliveryDate === dateStr;
-                    const availableTimesForDate = getAvailableDeliveryTimes(dateStr);
-                    const isDisabled = availableTimesForDate.length === 0;
+                <div className="grid grid-cols-2 gap-2">
+                  {availableDayOptions.map((option) => {
+                    const isSelected = deliveryDetails.deliveryDate === option.dateStr;
                     return (
                       <button
-                        key={dateStr}
+                        key={option.id}
                         type="button"
-                        disabled={isDisabled}
                         onClick={() => setDeliveryDetails({
                           ...deliveryDetails,
-                          deliveryDate: dateStr,
-                          deliveryTime: availableTimesForDate.includes(deliveryDetails.deliveryTime)
-                            ? deliveryDetails.deliveryTime
-                            : availableTimesForDate[0]
+                          deliveryDate: option.dateStr,
+                          deliveryTime: option.dateStr === todayDateString ? todayAvailableTimes[0] : tomorrowAvailableTimes[0]
                         })}
-                        className={`flex flex-col items-center justify-center min-w-[72px] sm:min-w-[80px] h-[4.5rem] sm:h-[4.75rem] rounded-xl border transition-all group ${
-                          isSelected 
-                          ? 'bg-emerald-deep border-emerald-deep text-white shadow-md z-10' 
-                          : isDisabled
-                            ? 'bg-slate-100 border-emerald-deep/5 text-emerald-deep/25 cursor-not-allowed'
-                            : 'bg-white border-emerald-deep/10 text-emerald-deep/50 hover:border-emerald-deep/25'
+                        className={`flex min-h-[4.25rem] flex-col items-start justify-center rounded-xl border px-4 py-3 text-left transition-all ${
+                          isSelected
+                            ? 'bg-emerald-deep border-emerald-deep text-white shadow-md'
+                            : 'bg-white border-emerald-deep/10 text-emerald-deep hover:border-emerald-deep/25'
                         }`}
                       >
-                        <span className="text-[8px] uppercase font-bold tracking-[0.12em] opacity-70 group-hover:opacity-100 transition-opacity">
-                          {date.toLocaleDateString('en-US', { weekday: 'short' })}
-                        </span>
-                        <span className="text-lg sm:text-xl font-semibold">
-                          {date.getDate()}
-                        </span>
-                        <span className="text-[8px] uppercase font-medium tracking-[0.1em] opacity-60">
-                          {date.toLocaleDateString('en-US', { month: 'short' })}
-                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-[0.12em]">{option.label}</span>
+                        <span className={`text-xs ${isSelected ? 'text-white/75' : 'text-emerald-deep/60'}`}>{option.dateStr}</span>
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {DELIVERY_TIME_OPTIONS.map((time) => {
                     const isSelected = deliveryDetails.deliveryTime === time;
-                    const isAvailable = selectedDateAvailableTimes.includes(time);
-                    const displayTime = new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', { 
-                      hour: 'numeric', 
-                      minute: '2-digit',
-                      hour12: true 
-                    });
+                    const isEnabled = selectableDeliveryTimes.includes(time);
                     return (
                       <Button
                         key={time}
+                        type="button"
                         variant="ghost"
-                        disabled={!isAvailable}
+                        disabled={!isEnabled}
                         className={`h-10 sm:h-11 text-[10px] font-semibold uppercase tracking-[0.08em] rounded-xl transition-all border ${
-                          isSelected 
-                          ? 'bg-emerald-deep text-white border-emerald-deep shadow-sm' 
-                          : !isAvailable
-                            ? 'bg-slate-100 border-emerald-deep/5 text-emerald-deep/25 cursor-not-allowed'
-                            : 'bg-slate-50 border-emerald-deep/10 text-emerald-deep/60 hover:bg-sky-50'
+                          isSelected
+                            ? 'bg-emerald-deep text-white border-emerald-deep shadow-sm'
+                            : !isEnabled
+                              ? 'bg-slate-100 border-emerald-deep/5 text-emerald-deep/25 cursor-not-allowed'
+                              : 'bg-slate-50 border-emerald-deep/10 text-emerald-deep/70 hover:bg-sky-50'
                         }`}
                         onClick={() => setDeliveryDetails({...deliveryDetails, deliveryTime: time})}
                       >
-                        {displayTime}
+                        {formatDeliverySlotLabel(time)}
                       </Button>
                     );
                   })}
                 </div>
-                {deliveryTimingMessage && (
-                  <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
-                    {deliveryTimingMessage}
-                  </p>
-                )}
+                <div className="space-y-2">
+                  {deliveryScheduleMessages.map((message) => (
+                    <p key={message} className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
+                      {message}
+                    </p>
+                  ))}
+                </div>
                 {formErrors.deliveryTime && <p className="text-xs text-red-500 ml-2">{formErrors.deliveryTime}</p>}
               </div>
 
@@ -4177,7 +4197,7 @@ export default function App() {
                 if (!deliveryDetails.fullName.trim()) errors.fullName = 'Full Name is required';
                 if (!deliveryDetails.phone.trim()) errors.phone = 'Phone Number is required';
                 if (deliveryDetails.deliveryMethod !== 'pickup' && !deliveryDetails.address.trim()) errors.address = 'Delivery Address is required';
-                if (!selectedDateAvailableTimes.includes(deliveryDetails.deliveryTime)) errors.deliveryTime = 'Please select an available delivery time';
+                if (!selectedDateBaseAvailableTimes.includes(deliveryDetails.deliveryTime)) errors.deliveryTime = 'Please select an available delivery time';
 
                 if (Object.keys(errors).length > 0) {
                   setFormErrors(errors);
