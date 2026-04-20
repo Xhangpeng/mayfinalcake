@@ -2283,12 +2283,15 @@ export default function App() {
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [paymentStep, setPaymentStep] = useState<'details' | 'success'>('details');
   const [simulatedOrder, setSimulatedOrder] = useState<Order | null>(null);
-  const now = new Date();
-  const minimumDeliveryDateTime = new Date(now.getTime() + MIN_DELIVERY_NOTICE_HOURS * 60 * 60 * 1000);
-  const todayDateString = formatLocalDate(now);
+  const [checkoutReferenceTime, setCheckoutReferenceTime] = useState(() => new Date());
+  const minimumDeliveryDateTime = useMemo(
+    () => new Date(checkoutReferenceTime.getTime() + MIN_DELIVERY_NOTICE_HOURS * 60 * 60 * 1000),
+    [checkoutReferenceTime]
+  );
+  const todayDateString = formatLocalDate(checkoutReferenceTime);
   const deliveryDateOptions = useMemo(() => (
     Array.from({ length: 14 }, (_, index) => {
-      const date = new Date();
+      const date = new Date(checkoutReferenceTime);
       date.setHours(0, 0, 0, 0);
       date.setDate(date.getDate() + index);
       return {
@@ -2296,7 +2299,7 @@ export default function App() {
         dateStr: formatLocalDate(date)
       };
     })
-  ), []);
+  ), [checkoutReferenceTime]);
 
   const getAvailableDeliveryTimes = (dateStr: string) => (
     DELIVERY_TIME_OPTIONS.filter((time) => createLocalDateTime(dateStr, time).getTime() >= minimumDeliveryDateTime.getTime())
@@ -2323,8 +2326,7 @@ export default function App() {
     () => getAvailableDeliveryTimes(todayDateString),
     [todayDateString, minimumDeliveryDateTime]
   );
-  const selectedDateIsToday = deliveryDetails.deliveryDate === todayDateString;
-  const hasDisabledSlotsForSelectedDate = selectedDateAvailableTimes.length < DELIVERY_TIME_OPTIONS.length;
+  const todayHasRestrictedSlots = todayAvailableTimes.length < DELIVERY_TIME_OPTIONS.length;
 
   useEffect(() => {
     if (!isOrderModalOpen || !nextAvailableDeliverySlot) return;
@@ -2345,6 +2347,7 @@ export default function App() {
       deliveryTime: nextAvailableDeliverySlot.time
     }));
   }, [
+    deliveryDetails.deliveryDate,
     deliveryDetails.deliveryTime,
     isOrderModalOpen,
     nextAvailableDeliverySlot,
@@ -2352,7 +2355,7 @@ export default function App() {
   ]);
 
   const deliveryTimingMessage = useMemo(() => {
-    if (!isOrderModalOpen || !selectedDateIsToday || !hasDisabledSlotsForSelectedDate) return '';
+    if (!isOrderModalOpen || !todayHasRestrictedSlots) return '';
 
     if (todayAvailableTimes.length === 0 && nextAvailableDeliverySlot) {
       const nextAvailableLabel = new Date(`2000-01-01T${nextAvailableDeliverySlot.time}`).toLocaleTimeString('en-US', {
@@ -2365,10 +2368,9 @@ export default function App() {
 
     return `Orders need at least ${MIN_DELIVERY_NOTICE_HOURS} hours of preparation. Earlier slots for today are disabled. If you need it before then, you will get a message.`;
   }, [
-    hasDisabledSlotsForSelectedDate,
     isOrderModalOpen,
     nextAvailableDeliverySlot,
-    selectedDateIsToday,
+    todayHasRestrictedSlots,
     todayAvailableTimes.length
   ]);
 
@@ -2648,6 +2650,8 @@ export default function App() {
       setIsAuthOpen(true);
       return;
     }
+    const checkoutNow = new Date();
+    setCheckoutReferenceTime(checkoutNow);
     if (method) setPaymentMethod(method);
     setIsCartOpen(false);
     setIsOrderModalOpen(true);
