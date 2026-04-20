@@ -2197,6 +2197,22 @@ const AdminDashboard = ({
   );
 };
 
+const DELIVERY_TIME_OPTIONS = ['09:00', '11:00', '13:00', '15:00', '17:00', '19:00'];
+const MIN_DELIVERY_NOTICE_HOURS = 6;
+
+const formatLocalDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const createLocalDateTime = (dateStr: string, time: string) => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const [hours, minutes] = time.split(':').map(Number);
+  return new Date(year, month - 1, day, hours, minutes, 0, 0);
+};
+
 export default function App() {
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -2223,7 +2239,7 @@ export default function App() {
     fullName: '',
     phone: '',
     address: '',
-    deliveryDate: new Date().toISOString().split('T')[0],
+    deliveryDate: formatLocalDate(new Date()),
     deliveryTime: '11:00',
     deliveryMethod: 'delivery'
   });
@@ -2267,6 +2283,95 @@ export default function App() {
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [paymentStep, setPaymentStep] = useState<'details' | 'success'>('details');
   const [simulatedOrder, setSimulatedOrder] = useState<Order | null>(null);
+  const now = new Date();
+  const minimumDeliveryDateTime = new Date(now.getTime() + MIN_DELIVERY_NOTICE_HOURS * 60 * 60 * 1000);
+  const todayDateString = formatLocalDate(now);
+  const deliveryDateOptions = useMemo(() => (
+    Array.from({ length: 14 }, (_, index) => {
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() + index);
+      return {
+        date,
+        dateStr: formatLocalDate(date)
+      };
+    })
+  ), []);
+
+  const getAvailableDeliveryTimes = (dateStr: string) => (
+    DELIVERY_TIME_OPTIONS.filter((time) => createLocalDateTime(dateStr, time).getTime() >= minimumDeliveryDateTime.getTime())
+  );
+
+  const nextAvailableDeliverySlot = useMemo(() => {
+    for (const option of deliveryDateOptions) {
+      const availableTimes = getAvailableDeliveryTimes(option.dateStr);
+      if (availableTimes.length > 0) {
+        return {
+          dateStr: option.dateStr,
+          time: availableTimes[0]
+        };
+      }
+    }
+    return null;
+  }, [deliveryDateOptions, minimumDeliveryDateTime]);
+
+  const selectedDateAvailableTimes = useMemo(
+    () => getAvailableDeliveryTimes(deliveryDetails.deliveryDate),
+    [deliveryDetails.deliveryDate, minimumDeliveryDateTime]
+  );
+  const todayAvailableTimes = useMemo(
+    () => getAvailableDeliveryTimes(todayDateString),
+    [todayDateString, minimumDeliveryDateTime]
+  );
+  const selectedDateIsToday = deliveryDetails.deliveryDate === todayDateString;
+  const hasDisabledSlotsForSelectedDate = selectedDateAvailableTimes.length < DELIVERY_TIME_OPTIONS.length;
+
+  useEffect(() => {
+    if (!isOrderModalOpen || !nextAvailableDeliverySlot) return;
+
+    if (selectedDateAvailableTimes.includes(deliveryDetails.deliveryTime)) return;
+
+    if (selectedDateAvailableTimes.length > 0) {
+      setDeliveryDetails((prev) => ({
+        ...prev,
+        deliveryTime: selectedDateAvailableTimes[0]
+      }));
+      return;
+    }
+
+    setDeliveryDetails((prev) => ({
+      ...prev,
+      deliveryDate: nextAvailableDeliverySlot.dateStr,
+      deliveryTime: nextAvailableDeliverySlot.time
+    }));
+  }, [
+    deliveryDetails.deliveryTime,
+    isOrderModalOpen,
+    nextAvailableDeliverySlot,
+    selectedDateAvailableTimes
+  ]);
+
+  const deliveryTimingMessage = useMemo(() => {
+    if (!isOrderModalOpen || !selectedDateIsToday || !hasDisabledSlotsForSelectedDate) return '';
+
+    if (todayAvailableTimes.length === 0 && nextAvailableDeliverySlot) {
+      const nextAvailableLabel = new Date(`2000-01-01T${nextAvailableDeliverySlot.time}`).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      return `Today is unavailable because orders need at least ${MIN_DELIVERY_NOTICE_HOURS} hours of preparation. The next available slot is ${nextAvailableDeliverySlot.dateStr} at ${nextAvailableLabel}. If you need it before then, you will get a message.`;
+    }
+
+    return `Orders need at least ${MIN_DELIVERY_NOTICE_HOURS} hours of preparation. Earlier slots for today are disabled. If you need it before then, you will get a message.`;
+  }, [
+    hasDisabledSlotsForSelectedDate,
+    isOrderModalOpen,
+    nextAvailableDeliverySlot,
+    selectedDateIsToday,
+    todayAvailableTimes.length
+  ]);
+
   const clearFormError = (field: keyof DeliveryDetails) => {
     setFormErrors((prev) => {
       if (!prev[field]) return prev;
@@ -3959,19 +4064,28 @@ export default function App() {
                 </div>
                 
                 <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar-horizontal">
-                  {[...Array(14)].map((_, i) => {
-                    const date = new Date();
-                    date.setDate(date.getDate() + i);
-                    const dateStr = date.toISOString().split('T')[0];
+                  {deliveryDateOptions.map(({ date, dateStr }) => {
                     const isSelected = deliveryDetails.deliveryDate === dateStr;
+                    const availableTimesForDate = getAvailableDeliveryTimes(dateStr);
+                    const isDisabled = availableTimesForDate.length === 0;
                     return (
                       <button
-                        key={i}
-                        onClick={() => setDeliveryDetails({...deliveryDetails, deliveryDate: dateStr})}
+                        key={dateStr}
+                        type="button"
+                        disabled={isDisabled}
+                        onClick={() => setDeliveryDetails({
+                          ...deliveryDetails,
+                          deliveryDate: dateStr,
+                          deliveryTime: availableTimesForDate.includes(deliveryDetails.deliveryTime)
+                            ? deliveryDetails.deliveryTime
+                            : availableTimesForDate[0]
+                        })}
                         className={`flex flex-col items-center justify-center min-w-[72px] sm:min-w-[80px] h-[4.5rem] sm:h-[4.75rem] rounded-xl border transition-all group ${
                           isSelected 
                           ? 'bg-emerald-deep border-emerald-deep text-white shadow-md z-10' 
-                          : 'bg-white border-emerald-deep/10 text-emerald-deep/50 hover:border-emerald-deep/25'
+                          : isDisabled
+                            ? 'bg-slate-100 border-emerald-deep/5 text-emerald-deep/25 cursor-not-allowed'
+                            : 'bg-white border-emerald-deep/10 text-emerald-deep/50 hover:border-emerald-deep/25'
                         }`}
                       >
                         <span className="text-[8px] uppercase font-bold tracking-[0.12em] opacity-70 group-hover:opacity-100 transition-opacity">
@@ -3989,8 +4103,9 @@ export default function App() {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {['09:00', '11:00', '13:00', '15:00', '17:00', '19:00'].map((time) => {
+                  {DELIVERY_TIME_OPTIONS.map((time) => {
                     const isSelected = deliveryDetails.deliveryTime === time;
+                    const isAvailable = selectedDateAvailableTimes.includes(time);
                     const displayTime = new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', { 
                       hour: 'numeric', 
                       minute: '2-digit',
@@ -4000,10 +4115,13 @@ export default function App() {
                       <Button
                         key={time}
                         variant="ghost"
+                        disabled={!isAvailable}
                         className={`h-10 sm:h-11 text-[10px] font-semibold uppercase tracking-[0.08em] rounded-xl transition-all border ${
                           isSelected 
                           ? 'bg-emerald-deep text-white border-emerald-deep shadow-sm' 
-                          : 'bg-slate-50 border-emerald-deep/10 text-emerald-deep/60 hover:bg-sky-50'
+                          : !isAvailable
+                            ? 'bg-slate-100 border-emerald-deep/5 text-emerald-deep/25 cursor-not-allowed'
+                            : 'bg-slate-50 border-emerald-deep/10 text-emerald-deep/60 hover:bg-sky-50'
                         }`}
                         onClick={() => setDeliveryDetails({...deliveryDetails, deliveryTime: time})}
                       >
@@ -4012,6 +4130,12 @@ export default function App() {
                     );
                   })}
                 </div>
+                {deliveryTimingMessage && (
+                  <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
+                    {deliveryTimingMessage}
+                  </p>
+                )}
+                {formErrors.deliveryTime && <p className="text-xs text-red-500 ml-2">{formErrors.deliveryTime}</p>}
               </div>
 
               {/* Summary Small */}
@@ -4049,6 +4173,7 @@ export default function App() {
                 if (!deliveryDetails.fullName.trim()) errors.fullName = 'Full Name is required';
                 if (!deliveryDetails.phone.trim()) errors.phone = 'Phone Number is required';
                 if (deliveryDetails.deliveryMethod !== 'pickup' && !deliveryDetails.address.trim()) errors.address = 'Delivery Address is required';
+                if (!selectedDateAvailableTimes.includes(deliveryDetails.deliveryTime)) errors.deliveryTime = 'Please select an available delivery time';
 
                 if (Object.keys(errors).length > 0) {
                   setFormErrors(errors);
