@@ -3849,56 +3849,55 @@ export default function App() {
 
       {/* Checkout Dialog */}
       <Dialog open={isOrderModalOpen} onOpenChange={setIsOrderModalOpen}>
-        <DialogContent className="w-full max-w-[96vw] sm:max-w-[44rem] max-h-[92dvh] flex flex-col overflow-hidden rounded-[2rem] sm:rounded-[2.75rem] p-0 border-none shadow-2xl bg-white">
-          <div className="bg-emerald-deep p-6 sm:p-8 md:p-10 text-white relative overflow-hidden shrink-0">
-            <div className="absolute top-0 right-0 w-36 h-36 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <DialogHeader className="relative z-10 space-y-4">
-              <div className="h-12 w-12 sm:h-14 sm:w-14 bg-white/10 backdrop-blur-md rounded-[1rem] flex items-center justify-center border border-white/20">
-                <LayoutDashboard className="h-7 w-7 text-white" />
+        <DialogContent className="w-full max-w-[96vw] sm:max-w-[40rem] max-h-[90dvh] flex flex-col overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] p-0 border border-emerald-deep/10 shadow-xl bg-white">
+          <div className="bg-sky-50 px-5 py-4 sm:px-6 sm:py-5 text-emerald-deep shrink-0 border-b border-emerald-deep/10">
+            <DialogHeader className="space-y-2">
+              <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center border border-emerald-deep/10 shadow-sm">
+                <LayoutDashboard className="h-5 w-5 text-emerald-deep" />
               </div>
-              <DialogTitle className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold italic uppercase tracking-tighter">Artisan Checkout</DialogTitle>
-              <DialogDescription className="text-white/50 text-[10px] font-bold uppercase tracking-[0.4em]">Finalize your collection</DialogDescription>
+              <DialogTitle className="text-xl sm:text-2xl font-heading font-bold italic tracking-tight">Checkout</DialogTitle>
+              <DialogDescription className="text-emerald-deep/60 text-[10px] font-bold uppercase tracking-[0.25em]">Enter delivery details</DialogDescription>
             </DialogHeader>
           </div>
-          <div className="flex-1 p-5 sm:p-6 md:p-8 overflow-y-auto custom-scrollbar min-h-0 relative">
-            <div className="space-y-8 pb-6">
+          <div className="flex-1 p-4 sm:p-5 md:p-6 overflow-y-auto custom-scrollbar min-h-0 relative">
+            <div className="space-y-6 pb-4">
               {/* Delivery Info */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="h-px w-8 bg-emerald-deep/20" />
-                  <h4 className="text-[10px] font-bold text-emerald-deep uppercase tracking-[0.4em] transform -translate-y-px">Logistics</h4>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-px w-6 bg-emerald-deep/20" />
+                  <h4 className="text-[10px] font-bold text-emerald-deep uppercase tracking-[0.25em]">Delivery</h4>
                 </div>
                 
-                <div className="grid gap-6">
-                  <div className="space-y-3">
-                    <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-deep/30 ml-3 italic">Fulfillment Method</Label>
-                    <div className="flex flex-col sm:flex-row gap-2 p-2 bg-emerald-deep/[0.03] rounded-[1.5rem] border border-emerald-deep/5">
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-deep/50">Method</Label>
+                    <div className="flex flex-col sm:flex-row gap-2 p-1 bg-slate-50 rounded-xl border border-emerald-deep/10">
                       <Button 
                         variant="ghost"
-                        className={`flex-1 rounded-[1.25rem] font-bold uppercase tracking-[0.2em] text-[10px] transition-all h-12 sm:h-14 ${deliveryDetails.deliveryMethod === 'delivery' ? 'bg-white text-emerald-deep shadow-xl' : 'text-emerald-deep/30 hover:text-emerald-deep/60'}`}
+                        className={`flex-1 rounded-lg font-bold uppercase tracking-[0.12em] text-[10px] transition-all h-10 sm:h-11 ${deliveryDetails.deliveryMethod === 'delivery' ? 'bg-white text-emerald-deep shadow-sm' : 'text-emerald-deep/45 hover:text-emerald-deep/70'}`}
                         onClick={() => {
                           setDeliveryDetails({...deliveryDetails, deliveryMethod: 'delivery'});
                           clearFormError('address');
                         }}
                       >
-                        White Glove Delivery
+                        Delivery
                       </Button>
                       <Button 
                         variant="ghost"
-                        className={`flex-1 rounded-[1.25rem] font-bold uppercase tracking-[0.2em] text-[10px] transition-all h-12 sm:h-14 ${deliveryDetails.deliveryMethod === 'pickup' ? 'bg-white text-emerald-deep shadow-xl' : 'text-emerald-deep/30 hover:text-emerald-deep/60'}`}
+                        className={`flex-1 rounded-lg font-bold uppercase tracking-[0.12em] text-[10px] transition-all h-10 sm:h-11 ${deliveryDetails.deliveryMethod === 'pickup' ? 'bg-white text-emerald-deep shadow-sm' : 'text-emerald-deep/45 hover:text-emerald-deep/70'}`}
                         onClick={() => {
                           setDeliveryDetails({...deliveryDetails, deliveryMethod: 'pickup'});
                           clearFormError('address');
                         }}
                       >
-                        Boutique Pickup
+                        Pickup
                       </Button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-                    <div className="space-y-3">
-                      <Label htmlFor="fullName" className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-deep/30 ml-3 italic">Artisan Name</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName" className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-deep/50">Full Name</Label>
                       <Input 
                         id="fullName" 
                         value={deliveryDetails.fullName}
@@ -3906,12 +3905,12 @@ export default function App() {
                           setDeliveryDetails({...deliveryDetails, fullName: e.target.value});
                           clearFormError('fullName');
                         }}
-                        className="rounded-2xl border-emerald-deep/10 focus:ring-emerald-deep/5 h-12 sm:h-14 bg-emerald-deep/[0.01] shadow-inner"
+                        className="rounded-xl border-emerald-deep/10 focus:ring-emerald-deep/5 h-11 bg-white"
                       />
                       {formErrors.fullName && <p className="text-xs text-red-500 ml-2">{formErrors.fullName}</p>}
                     </div>
-                    <div className="space-y-3">
-                      <Label htmlFor="phone" className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-deep/30 ml-3 italic">Contact Line</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-deep/50">Phone Number</Label>
                       <Input 
                         id="phone" 
                         value={deliveryDetails.phone}
@@ -3919,30 +3918,32 @@ export default function App() {
                           setDeliveryDetails({...deliveryDetails, phone: e.target.value});
                           clearFormError('phone');
                         }}
-                        className="rounded-2xl border-emerald-deep/10 focus:ring-emerald-deep/5 h-12 sm:h-14 bg-emerald-deep/[0.01] shadow-inner"
+                        className="rounded-xl border-emerald-deep/10 focus:ring-emerald-deep/5 h-11 bg-white"
                       />
                       {formErrors.phone && <p className="text-xs text-red-500 ml-2">{formErrors.phone}</p>}
                     </div>
                   </div>
 
-                  <div className="grid gap-3">
-                    <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-deep/30 ml-3 italic">Delivery Destination</Label>
+                  <div className="grid gap-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-deep/50">
+                      {deliveryDetails.deliveryMethod === 'pickup' ? 'Pickup Location' : 'Delivery Address'}
+                    </Label>
                     {deliveryDetails.deliveryMethod === 'pickup' ? (
-                      <div className="p-5 sm:p-6 bg-emerald-deep/[0.03] rounded-[1.5rem] sm:rounded-[2rem] border border-emerald-deep/5 text-sm text-emerald-deep leading-relaxed shadow-inner italic">
-                        <p className="font-bold text-emerald-deep mb-2">Koseli Artisan Bakery</p>
-                        <p className="opacity-60">Airy Chauraha, Dhangadhi, Nepal</p>
-                        <p className="opacity-40 mt-3 text-[10px] font-bold uppercase tracking-widest">Hand-off from 9:00 AM - 8:00 PM</p>
+                      <div className="p-4 bg-slate-50 rounded-xl border border-emerald-deep/10 text-sm text-emerald-deep leading-relaxed">
+                        <p className="font-semibold text-emerald-deep">Koseli Artisan Bakery</p>
+                        <p className="opacity-70">Airy Chauraha, Dhangadhi, Nepal</p>
+                        <p className="opacity-50 mt-1 text-[10px] font-medium">Pickup hours: 9:00 AM to 8:00 PM</p>
                       </div>
                     ) : (
                       <Input 
                         id="address" 
-                        placeholder="Street, Studio No, Landmark..."
+                        placeholder="Street, area, landmark"
                         value={deliveryDetails.address}
                         onChange={(e) => {
                           setDeliveryDetails({...deliveryDetails, address: e.target.value});
                           clearFormError('address');
                         }}
-                        className="rounded-2xl border-emerald-deep/10 focus:ring-emerald-deep/5 h-14 sm:h-16 bg-emerald-deep/[0.01] shadow-inner px-5"
+                        className="rounded-xl border-emerald-deep/10 focus:ring-emerald-deep/5 h-11 bg-white px-4"
                       />
                     )}
                     {formErrors.address && deliveryDetails.deliveryMethod !== 'pickup' && <p className="text-xs text-red-500 ml-2">{formErrors.address}</p>}
@@ -3951,13 +3952,13 @@ export default function App() {
               </div>
 
               {/* Schedule */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="h-px w-8 bg-emerald-deep/20" />
-                  <h4 className="text-[10px] font-bold text-emerald-deep uppercase tracking-[0.4em] transform -translate-y-px">Schedule</h4>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-px w-6 bg-emerald-deep/20" />
+                  <h4 className="text-[10px] font-bold text-emerald-deep uppercase tracking-[0.25em]">Schedule</h4>
                 </div>
                 
-                <div className="flex gap-3 overflow-x-auto pb-3 custom-scrollbar-horizontal">
+                <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar-horizontal">
                   {[...Array(14)].map((_, i) => {
                     const date = new Date();
                     date.setDate(date.getDate() + i);
@@ -3967,19 +3968,19 @@ export default function App() {
                       <button
                         key={i}
                         onClick={() => setDeliveryDetails({...deliveryDetails, deliveryDate: dateStr})}
-                        className={`flex flex-col items-center justify-center min-w-[84px] sm:min-w-[92px] h-[5.5rem] sm:h-24 rounded-2xl border-2 transition-all group ${
+                        className={`flex flex-col items-center justify-center min-w-[72px] sm:min-w-[80px] h-[4.5rem] sm:h-[4.75rem] rounded-xl border transition-all group ${
                           isSelected 
-                          ? 'bg-emerald-deep border-emerald-deep text-white shadow-2xl scale-105 z-10' 
-                          : 'bg-white border-emerald-deep/5 text-emerald-deep/40 hover:border-emerald-deep/20'
+                          ? 'bg-emerald-deep border-emerald-deep text-white shadow-md z-10' 
+                          : 'bg-white border-emerald-deep/10 text-emerald-deep/50 hover:border-emerald-deep/25'
                         }`}
                       >
-                        <span className="text-[9px] uppercase font-bold tracking-widest mb-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[8px] uppercase font-bold tracking-[0.12em] opacity-70 group-hover:opacity-100 transition-opacity">
                           {date.toLocaleDateString('en-US', { weekday: 'short' })}
                         </span>
-                        <span className="text-2xl sm:text-3xl font-heading font-bold italic">
+                        <span className="text-lg sm:text-xl font-semibold">
                           {date.getDate()}
                         </span>
-                        <span className="text-[8px] uppercase font-bold tracking-[0.2em] mt-1 opacity-40">
+                        <span className="text-[8px] uppercase font-medium tracking-[0.1em] opacity-60">
                           {date.toLocaleDateString('en-US', { month: 'short' })}
                         </span>
                       </button>
@@ -3987,7 +3988,7 @@ export default function App() {
                   })}
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {['09:00', '11:00', '13:00', '15:00', '17:00', '19:00'].map((time) => {
                     const isSelected = deliveryDetails.deliveryTime === time;
                     const displayTime = new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', { 
@@ -3999,10 +4000,10 @@ export default function App() {
                       <Button
                         key={time}
                         variant="ghost"
-                        className={`h-12 sm:h-14 text-[10px] font-bold uppercase tracking-[0.2em] rounded-2xl transition-all border ${
+                        className={`h-10 sm:h-11 text-[10px] font-semibold uppercase tracking-[0.08em] rounded-xl transition-all border ${
                           isSelected 
-                          ? 'bg-emerald-deep text-white border-emerald-deep shadow-lg scale-105' 
-                          : 'bg-emerald-deep/[0.02] border-emerald-deep/5 text-emerald-deep/40 hover:bg-emerald-deep/10'
+                          ? 'bg-emerald-deep text-white border-emerald-deep shadow-sm' 
+                          : 'bg-slate-50 border-emerald-deep/10 text-emerald-deep/60 hover:bg-sky-50'
                         }`}
                         onClick={() => setDeliveryDetails({...deliveryDetails, deliveryTime: time})}
                       >
@@ -4014,35 +4015,35 @@ export default function App() {
               </div>
 
               {/* Summary Small */}
-              <div className="bg-emerald-deep/[0.03] p-5 sm:p-6 rounded-[2rem] sm:rounded-[2.5rem] border border-emerald-deep/5 space-y-4">
-                <div className="flex items-center justify-between text-[11px] font-bold text-emerald-deep uppercase tracking-[0.2em]">
-                  <span className="opacity-40 italic">Collection Count</span>
-                  <span>{cart.length} Masterpiece{cart.length > 1 ? 's' : ''}</span>
+              <div className="bg-slate-50 p-4 rounded-xl border border-emerald-deep/10 space-y-3">
+                <div className="grid grid-cols-2 gap-3 text-sm text-emerald-deep">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-deep/50">Items</p>
+                    <p className="font-semibold">{cart.length}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-deep/50">Method</p>
+                    <p className="font-semibold capitalize">{deliveryDetails.deliveryMethod}</p>
+                  </div>
                 </div>
-                <Separator className="bg-emerald-deep/5" />
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-emerald-deep/40 uppercase tracking-[0.2em] italic">Total Artisan Value</span>
-                    <p className="text-3xl sm:text-4xl font-heading font-bold text-emerald-deep italic tracking-tighter">Rs. {totalAmount}</p>
-                  </div>
-                  <div className="space-y-1 sm:text-right">
-                    <span className="text-[11px] font-bold text-emerald-deep/40 uppercase tracking-[0.2em] italic">Fulfillment</span>
-                    <p className="text-xs font-bold text-emerald-deep uppercase tracking-widest">{deliveryDetails.deliveryMethod.toUpperCase()}</p>
-                  </div>
+                <Separator className="bg-emerald-deep/10" />
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-deep/50">Total</span>
+                  <p className="text-xl sm:text-2xl font-semibold text-emerald-deep">Rs. {totalAmount}</p>
                 </div>
               </div>
             </div>
           </div>
-          <div className="p-4 sm:p-5 md:p-6 bg-gray-50 flex flex-col-reverse sm:flex-row gap-3 shrink-0">
+          <div className="p-4 sm:p-5 bg-gray-50 flex flex-col-reverse sm:flex-row gap-3 shrink-0 border-t border-emerald-deep/10">
             <Button 
               variant="ghost" 
-              className="flex-1 h-12 sm:h-14 rounded-[1.5rem] font-bold uppercase tracking-[0.25em] text-[10px] text-emerald-deep/30 hover:text-emerald-deep"
+              className="flex-1 h-11 rounded-xl font-bold uppercase tracking-[0.12em] text-[10px] text-emerald-deep/50 hover:text-emerald-deep"
               onClick={() => setIsOrderModalOpen(false)}
             >
               Continue Browsing
             </Button>
             <Button 
-              className="flex-[2] bg-emerald-deep hover:bg-emerald-deep/90 text-white h-12 sm:h-14 rounded-[1.5rem] font-bold uppercase tracking-[0.25em] text-[10px] shadow-2xl shadow-emerald-deep/20 transition-all hover:scale-[1.01] active:scale-[0.98]"
+              className="flex-[2] bg-emerald-deep hover:bg-emerald-deep/90 text-white h-11 rounded-xl font-bold uppercase tracking-[0.12em] text-[10px] shadow-lg shadow-emerald-deep/15 transition-all"
               onClick={() => {
                 const errors: { [key: string]: string } = {};
                 if (!deliveryDetails.fullName.trim()) errors.fullName = 'Full Name is required';
@@ -4059,7 +4060,7 @@ export default function App() {
                 setIsConfirmationOpen(true);
               }}
             >
-              Review Order details
+              Review Order
             </Button>
           </div>
         </DialogContent>
