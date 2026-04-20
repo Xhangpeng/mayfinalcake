@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -2199,6 +2199,21 @@ const AdminDashboard = ({
 
 const DELIVERY_TIME_OPTIONS = ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00'];
 const MIN_DELIVERY_NOTICE_HOURS = 6;
+const CART_TTL_MS = 24 * 60 * 60 * 1000;
+const ORDER_TTL_MS = 72 * 60 * 60 * 1000;
+const CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
+const CART_STORAGE_PREFIX = 'koseli-cart:';
+const CART_SESSION_KEY = 'koseli-cart-session-id';
+
+type CartOwnerType = 'user' | 'session';
+
+interface StoredCartRecord {
+  ownerType: CartOwnerType;
+  ownerId: string;
+  items: OrderItem[];
+  created_at: string;
+  createdAtMs: number;
+}
 
 const formatLocalDate = (date: Date) => {
   const year = date.getFullYear();
@@ -2219,11 +2234,98 @@ const formatDeliverySlotLabel = (time: string) =>
     hour12: true
   });
 
+const getOrCreateCartSessionId = () => {
+  if (typeof window === 'undefined') return 'server-session';
+
+  const existingSessionId = window.localStorage.getItem(CART_SESSION_KEY);
+  if (existingSessionId) return existingSessionId;
+
+  const nextSessionId = window.crypto?.randomUUID?.() || `session-${Date.now()}`;
+  window.localStorage.setItem(CART_SESSION_KEY, nextSessionId);
+  return nextSessionId;
+};
+
+const getCartStorageKey = (ownerType: CartOwnerType, ownerId: string) => `${CART_STORAGE_PREFIX}${ownerType}:${ownerId}`;
+
+const getTimestampMs = (value: any): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = new Date(value).getTime();
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  if (value instanceof Date) return value.getTime();
+  if (value?.toDate) return value.toDate().getTime();
+  if (typeof value?.seconds === 'number') return value.seconds * 1000;
+  return null;
+};
+
+const getRecordCreatedAtMs = (record: { createdAtMs?: number; created_at?: string; createdAt?: any }) =>
+  getTimestampMs(record.createdAtMs) ?? getTimestampMs(record.created_at) ?? getTimestampMs(record.createdAt);
+
+const isExpiredByAge = (createdAtMs: number | null, ttlMs: number) =>
+  createdAtMs !== null && Date.now() > createdAtMs + ttlMs;
+
+const filterActiveOrders = (ordersList: Order[]) =>
+  ordersList.filter((order) => !isExpiredByAge(getRecordCreatedAtMs(order), ORDER_TTL_MS));
+
+const readStoredCart = (storageKey: string): StoredCartRecord | null => {
+  if (typeof window === 'undefined') return null;
+
+  const rawValue = window.localStorage.getItem(storageKey);
+  if (!rawValue) return null;
+
+  try {
+    const parsed = JSON.parse(rawValue) as StoredCartRecord;
+    if (!Array.isArray(parsed.items) || typeof parsed.ownerId !== 'string' || typeof parsed.createdAtMs !== 'number') {
+      window.localStorage.removeItem(storageKey);
+      return null;
+    }
+    if (isExpiredByAge(parsed.createdAtMs, CART_TTL_MS)) {
+      window.localStorage.removeItem(storageKey);
+      return null;
+    }
+    return parsed;
+  } catch {
+    window.localStorage.removeItem(storageKey);
+    return null;
+  }
+};
+
+const writeStoredCart = (storageKey: string, cartRecord: StoredCartRecord) => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(storageKey, JSON.stringify(cartRecord));
+};
+
+const removeStoredCart = (storageKey: string) => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(storageKey);
+};
+
+const cleanupExpiredStoredCarts = () => {
+  if (typeof window === 'undefined') return;
+
+  const keysToDelete: string[] = [];
+  for (let index = 0; index < window.localStorage.length; index += 1) {
+    const storageKey = window.localStorage.key(index);
+    if (!storageKey || !storageKey.startsWith(CART_STORAGE_PREFIX)) continue;
+
+    const cartRecord = readStoredCart(storageKey);
+    if (!cartRecord) {
+      keysToDelete.push(storageKey);
+    }
+  }
+
+  keysToDelete.forEach((storageKey) => window.localStorage.removeItem(storageKey));
+};
+
 export default function App() {
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<OrderItem[]>([]);
+  const [cartCreatedAtMs, setCartCreatedAtMs] = useState<number | null>(null);
+  const [isCartHydrated, setIsCartHydrated] = useState(false);
+  const [sessionId] = useState(() => getOrCreateCartSessionId());
   const [isQuickSidebarOpen, setIsQuickSidebarOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
@@ -2289,6 +2391,8 @@ export default function App() {
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [paymentStep, setPaymentStep] = useState<'details' | 'success'>('details');
   const [simulatedOrder, setSimulatedOrder] = useState<Order | null>(null);
+  const userOrdersRawRef = useRef<Order[]>([]);
+  const allOrdersRawRef = useRef<Order[]>([]);
   const [checkoutReferenceTime, setCheckoutReferenceTime] = useState(() => new Date());
   const minimumDeliveryDateTime = useMemo(
     () => new Date(checkoutReferenceTime.getTime() + MIN_DELIVERY_NOTICE_HOURS * 60 * 60 * 1000),
@@ -2413,6 +2517,113 @@ export default function App() {
     inStock: true
   });
 
+  const clearCartState = () => {
+    setCart([]);
+    setCartCreatedAtMs(null);
+  };
+
+  const deleteExpiredOrdersFromFirestore = async (ordersList: Order[]) => {
+    const expiredOrders = ordersList.filter((order) => isExpiredByAge(getRecordCreatedAtMs(order), ORDER_TTL_MS));
+    for (const order of expiredOrders) {
+      try {
+        await deleteDoc(doc(db, 'orders', order.id));
+      } catch (error) {
+        console.error('Error deleting expired order:', error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    cleanupExpiredStoredCarts();
+
+    const guestCartKey = getCartStorageKey('session', sessionId);
+    const guestCart = readStoredCart(guestCartKey);
+
+    if (user?.uid) {
+      const userCartKey = getCartStorageKey('user', user.uid);
+      const userCart = readStoredCart(userCartKey);
+      const activeCart = userCart ?? guestCart;
+
+      setCart(activeCart?.items ?? []);
+      setCartCreatedAtMs(activeCart?.createdAtMs ?? null);
+
+      if (activeCart) {
+        writeStoredCart(userCartKey, {
+          ...activeCart,
+          ownerType: 'user',
+          ownerId: user.uid
+        });
+        writeStoredCart(guestCartKey, {
+          ...activeCart,
+          ownerType: 'session',
+          ownerId: sessionId
+        });
+      }
+    } else {
+      setCart(guestCart?.items ?? []);
+      setCartCreatedAtMs(guestCart?.createdAtMs ?? null);
+    }
+
+    setIsCartHydrated(true);
+  }, [sessionId, user?.uid]);
+
+  useEffect(() => {
+    if (!isCartHydrated) return;
+
+    const guestCartKey = getCartStorageKey('session', sessionId);
+    const userCartKey = user?.uid ? getCartStorageKey('user', user.uid) : null;
+
+    if (cart.length === 0 || cartCreatedAtMs === null || isExpiredByAge(cartCreatedAtMs, CART_TTL_MS)) {
+      removeStoredCart(guestCartKey);
+      if (userCartKey) removeStoredCart(userCartKey);
+      return;
+    }
+
+    const baseCartRecord: StoredCartRecord = {
+      ownerType: 'session',
+      ownerId: sessionId,
+      items: cart,
+      created_at: new Date(cartCreatedAtMs).toISOString(),
+      createdAtMs: cartCreatedAtMs
+    };
+
+    writeStoredCart(guestCartKey, baseCartRecord);
+
+    if (userCartKey && user?.uid) {
+      writeStoredCart(userCartKey, {
+        ...baseCartRecord,
+        ownerType: 'user',
+        ownerId: user.uid
+      });
+    }
+  }, [cart, cartCreatedAtMs, isCartHydrated, sessionId, user?.uid]);
+
+  useEffect(() => {
+    if (!isCartHydrated) return;
+
+    const runCleanup = async () => {
+      cleanupExpiredStoredCarts();
+
+      if (isExpiredByAge(cartCreatedAtMs, CART_TTL_MS)) {
+        clearCartState();
+      }
+
+      setOrders(filterActiveOrders(userOrdersRawRef.current));
+
+      if (isAdmin) {
+        setAllOrders(filterActiveOrders(allOrdersRawRef.current));
+        await deleteExpiredOrdersFromFirestore(allOrdersRawRef.current);
+      }
+    };
+
+    void runCleanup();
+    const intervalId = window.setInterval(() => {
+      void runCleanup();
+    }, CLEANUP_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [cartCreatedAtMs, isAdmin, isCartHydrated]);
+
   // Auth & Initial Data
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (u) => {
@@ -2446,7 +2657,9 @@ export default function App() {
         // Fetch user orders
         const q = query(collection(db, 'orders'), where('userId', '==', u.uid), orderBy('createdAt', 'desc'));
         onSnapshot(q, (snapshot) => {
-          setOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order)));
+          const nextOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+          userOrdersRawRef.current = nextOrders;
+          setOrders(filterActiveOrders(nextOrders));
         }, (error) => {
           console.error('Orders subscription error:', error);
         });
@@ -2455,7 +2668,10 @@ export default function App() {
         if (isUserAdmin) {
           const allQ = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
           onSnapshot(allQ, (snapshot) => {
-            setAllOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order)));
+            const nextOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+            allOrdersRawRef.current = nextOrders;
+            setAllOrders(filterActiveOrders(nextOrders));
+            void deleteExpiredOrdersFromFirestore(nextOrders);
           }, (error) => {
             console.error('All orders subscription error:', error);
           });
@@ -2472,6 +2688,8 @@ export default function App() {
         setIsAdmin(false);
         setOrders([]);
         setAllOrders([]);
+        userOrdersRawRef.current = [];
+        allOrdersRawRef.current = [];
       }
     });
 
@@ -2501,37 +2719,6 @@ export default function App() {
       unsubProducts();
     };
   }, []);
-
-  // Cleanup delivered orders older than 48 hours
-  useEffect(() => {
-    const cleanupDeliveredOrders = async (ordersList: Order[]) => {
-      const now = new Date().getTime();
-      const fortyEightHoursInMs = 48 * 60 * 60 * 1000;
-
-      for (const order of ordersList) {
-        if (order.status === 'delivered') {
-          // Find the timestamp when it was delivered
-          const deliveredEvent = order.timeline.find(e => e.status === 'delivered');
-          if (deliveredEvent) {
-            const deliveredTime = new Date(deliveredEvent.timestamp).getTime();
-            if (now - deliveredTime > fortyEightHoursInMs) {
-              try {
-                await deleteDoc(doc(db, 'orders', order.id));
-              } catch (error) {
-                console.error('Error deleting old order:', error);
-              }
-            }
-          }
-        }
-      }
-    };
-
-    if (isAdmin && allOrders.length > 0) {
-      cleanupDeliveredOrders(allOrders);
-    } else if (orders.length > 0) {
-      cleanupDeliveredOrders(orders);
-    }
-  }, [orders, allOrders, isAdmin]);
 
   const handleSignIn = async () => {
     try {
@@ -2617,6 +2804,9 @@ export default function App() {
       imageUrl: selectedProduct.imageUrl
     };
 
+    if (cart.length === 0 && cartCreatedAtMs === null) {
+      setCartCreatedAtMs(Date.now());
+    }
     setCart([...cart, newItem]);
     setIsDetailsModalOpen(false);
     setCustomDetails({ name: '', design: '' });
@@ -2636,6 +2826,9 @@ export default function App() {
       imageUrl: product.imageUrl
     };
 
+    if (cart.length === 0 && cartCreatedAtMs === null) {
+      setCartCreatedAtMs(Date.now());
+    }
     setCart([...cart, newItem]);
     setLastAddedProduct(product);
     setNotificationProduct(product);
@@ -2643,10 +2836,17 @@ export default function App() {
     setTimeout(() => setShowCartNotification(false), 3000);
   };
 
+  const clearCart = () => {
+    clearCartState();
+  };
+
   const removeFromCart = (index: number) => {
     const newCart = [...cart];
     newCart.splice(index, 1);
     setCart(newCart);
+    if (newCart.length === 0) {
+      setCartCreatedAtMs(null);
+    }
   };
 
   const updateCartQuantity = (index: number, delta: number) => {
@@ -2839,6 +3039,7 @@ export default function App() {
       // Direct order creation for COD
       try {
         const readableId = generateReadableId();
+        const createdAtMs = Date.now();
         const orderData: Omit<Order, 'id'> = {
           readableId,
           userId: user.uid,
@@ -2855,13 +3056,15 @@ export default function App() {
               message: 'Order placed with Cash on Delivery.' 
             }
           ],
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
+          created_at: new Date(createdAtMs).toISOString(),
+          createdAtMs
         };
 
         const orderRef = await addDoc(collection(db, 'orders'), orderData);
         const fullOrder = { id: orderRef.id, ...orderData } as Order;
         
-        setCart([]);
+        clearCartState();
         setIsOrderModalOpen(false);
         setIsConfirmationOpen(false);
         setSimulatedOrder(fullOrder);
@@ -2896,6 +3099,7 @@ export default function App() {
 
     try {
       const readableId = generateReadableId();
+      const createdAtMs = Date.now();
       const orderData: Omit<Order, 'id'> = {
         readableId,
         userId: user.uid,
@@ -2912,13 +3116,15 @@ export default function App() {
             message: `Payment successful via ${paymentMethod.toUpperCase()}.` 
           }
         ],
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        created_at: new Date(createdAtMs).toISOString(),
+        createdAtMs
       };
 
       const orderRef = await addDoc(collection(db, 'orders'), orderData);
       const fullOrder = { id: orderRef.id, ...orderData } as Order;
       
-      setCart([]);
+      clearCartState();
       setSimulatedOrder(fullOrder);
       setPaymentStep('success');
       
@@ -3413,7 +3619,7 @@ export default function App() {
                     onExplore={() => setActiveView('menu')}
                     addToCart={addToCart}
                     clearCart={() => {
-                      setCart([]);
+                      clearCart();
                       toast.success('Cart cleared');
                     }}
                     paymentMethod={paymentMethod}

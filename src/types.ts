@@ -47,6 +47,8 @@ export interface Order {
   paymentMethod: 'esewa' | 'khalti' | 'cod';
   timeline: TimelineEvent[];
   createdAt: any;
+  created_at?: string;
+  createdAtMs?: number;
 }
 
 export interface UserProfile {
