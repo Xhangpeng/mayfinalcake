@@ -64,7 +64,6 @@ import {
   Cake,
   Coffee,
   BarChart3,
-  Users,
   Settings,
   MoreVertical,
   Download,
@@ -105,7 +104,6 @@ import {
   DeliveryDetails, 
   OrderStatus, 
   TimelineEvent,
-  UserProfile,
   AppNotification
 } from './types';
 import { INITIAL_PRODUCTS } from './constants';
@@ -115,10 +113,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Toaster, toast } from 'sonner';
 
 // --- Components ---
@@ -359,7 +356,7 @@ const CartPage = ({
                 <motion.div 
                   key={index}
                   layout
-                  className="bg-[#e5e5e0]/30 p-4 md:p-6 rounded-[2rem] border border-emerald-deep/5 shadow-sm flex gap-4 md:gap-6 group relative hover:shadow-md transition-all duration-300"
+                  className="bg-[#e5e5e0]/30 p-4 md:p-6 rounded-[2rem] border border-emerald-deep/5 shadow-sm flex flex-col gap-4 md:flex-row md:gap-6 group relative hover:shadow-md transition-all duration-300"
                 >
                   <div className="flex items-start gap-4">
                     <div className="h-5 w-5 rounded-full border border-emerald-deep/20 mt-1 shrink-0 flex items-center justify-center bg-white">
@@ -375,10 +372,10 @@ const CartPage = ({
                     </div>
                   </div>
 
-                  <div className="flex flex-1 flex-col justify-between py-1">
+                  <div className="flex flex-1 flex-col justify-between gap-4 py-1 min-w-0">
                     <div className="flex justify-between items-start gap-4">
-                      <div className="space-y-1">
-                        <h4 className="font-heading font-bold text-lg md:text-xl text-emerald-deep leading-tight italic">{item.cakeName}</h4>
+                      <div className="space-y-1 min-w-0">
+                        <h4 className="font-heading font-bold text-lg md:text-xl text-emerald-deep leading-tight italic break-words">{item.cakeName}</h4>
                         <p className="text-[10px] text-emerald-deep/40 font-bold uppercase tracking-widest">DESIGN: {item.cakeDesign || 'STANDARD'}</p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -391,7 +388,7 @@ const CartPage = ({
                       </div>
                     </div>
 
-                    <div className="flex items-end justify-between mt-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                       <div className="flex flex-col">
                         <span className="text-[9px] font-bold text-emerald-deep/30 uppercase tracking-widest">ARTISAN VALUE</span>
                         <div className="flex items-baseline gap-1">
@@ -400,21 +397,21 @@ const CartPage = ({
                         </div>
                       </div>
                       
-                      <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-full p-1 border border-emerald-deep/5 shadow-sm">
+                      <div className="flex w-full sm:w-auto items-center justify-between sm:justify-center bg-white/90 backdrop-blur-sm rounded-[1.25rem] sm:rounded-full p-1.5 border border-emerald-deep/5 shadow-sm">
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 rounded-full hover:bg-emerald-deep/5 text-emerald-deep disabled:opacity-30"
+                          className="h-9 w-9 rounded-full hover:bg-emerald-deep/5 text-emerald-deep disabled:opacity-30"
                           onClick={() => updateCartQuantity(index, -1)}
                           disabled={item.quantity <= 1}
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
-                        <span className="font-heading font-bold text-emerald-deep min-w-[30px] text-center text-sm">{item.quantity}</span>
+                        <span className="font-heading font-bold text-emerald-deep min-w-[44px] text-center text-base">{item.quantity}</span>
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 rounded-full hover:bg-emerald-deep/5 text-emerald-deep"
+                          className="h-9 w-9 rounded-full hover:bg-emerald-deep/5 text-emerald-deep"
                           onClick={() => updateCartQuantity(index, 1)}
                         >
                           <Plus className="h-3 w-3" />
@@ -1020,7 +1017,7 @@ const CartNotification = ({ product, isOpen, onClick }: { product: Product | nul
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.9 }}
           onClick={onClick}
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-md focus:outline-none group"
+          className="fixed bottom-28 md:bottom-8 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-md focus:outline-none group"
         >
           <div className="bg-emerald-deep/95 backdrop-blur-xl border border-white/20 rounded-[3rem] p-3 shadow-[0_40px_80px_rgba(0,174,239,0.4)] flex items-center justify-between transition-all group-hover:scale-[1.02] active:scale-[0.98]">
             <div className="flex items-center gap-5 pl-5">
@@ -1097,13 +1094,13 @@ const AddToCartModal = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <Button
               variant="outline"
-              className="h-12 sm:h-14 rounded-2xl border-emerald-deep/10 text-emerald-deep font-bold text-[10px] md:text-[11px] uppercase tracking-[0.25em] hover:bg-emerald-deep/5 transition-all"
+              className={DIALOG_ACTION_OUTLINE}
               onClick={onClose}
             >
               Continue Exploring
             </Button>
             <Button
-              className="h-12 sm:h-14 rounded-2xl bg-emerald-deep text-white font-bold text-[10px] md:text-[11px] uppercase tracking-[0.25em] hover:bg-emerald-deep/90 shadow-xl shadow-emerald-deep/10 transition-all"
+              className={DIALOG_ACTION_PRIMARY}
               onClick={onGoToCart}
             >
               Go to Cart
@@ -1532,7 +1529,6 @@ const StatusPicker = ({
 const AdminDashboard = ({ 
   products, 
   orders, 
-  users,
   onAddProduct, 
   onEditProduct, 
   onDeleteProduct, 
@@ -1543,7 +1539,6 @@ const AdminDashboard = ({
 }: { 
   products: Product[], 
   orders: Order[], 
-  users: UserProfile[],
   onAddProduct: () => void, 
   onEditProduct: (p: Product) => void, 
   onDeleteProduct: (id: string) => void,
@@ -1557,6 +1552,13 @@ const AdminDashboard = ({
   const [trackId, setTrackId] = useState('');
 
   const filteredOrders = orderFilter === 'all' ? orders : orders.filter(o => o.status === orderFilter);
+  const adminTabs = [
+    { id: 'dashboard', label: 'Overview', icon: BarChart3 },
+    { id: 'products', label: 'Products', icon: Grid },
+    { id: 'orders', label: 'Orders', icon: ShoppingBag },
+    { id: 'settings', label: 'Control Panel', icon: Shield }
+  ] as const;
+  const activeAdminTab = adminTabs.find((tab) => tab.id === activeTab) ?? adminTabs[0];
   
   const stats = {
     totalOrders: orders.length,
@@ -1564,7 +1566,8 @@ const AdminDashboard = ({
     pendingCount: orders.filter(o => o.status === 'pending').length,
     cancelledCount: orders.filter(o => o.status === 'cancelled').length,
     deliveredCount: orders.filter(o => o.status === 'delivered').length,
-    avgOrderValue: orders.length > 0 ? Math.round(orders.reduce((acc, o) => acc + o.totalAmount, 0) / orders.length) : 0
+    avgOrderValue: orders.length > 0 ? Math.round(orders.reduce((acc, o) => acc + o.totalAmount, 0) / orders.length) : 0,
+    liveProducts: products.filter((product) => product.inStock).length
   };
 
   // Mock data for charts
@@ -1590,28 +1593,26 @@ const AdminDashboard = ({
   const SidebarItem = ({ id, label, icon: Icon }: any) => (
     <button
       onClick={() => setActiveTab(id)}
-      className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 ${activeTab === id ? 'bg-emerald-deep text-white shadow-xl shadow-emerald-deep/20' : 'text-emerald-deep/40 hover:bg-emerald-deep/5 hover:text-emerald-deep'}`}
+      className={`w-full flex items-center gap-4 px-4 py-3 sm:px-6 sm:py-4 rounded-2xl transition-all duration-300 ${activeTab === id ? 'bg-emerald-deep text-white shadow-xl shadow-emerald-deep/20' : 'text-emerald-deep/50 hover:bg-emerald-deep/5 hover:text-emerald-deep'}`}
     >
       <Icon className="h-5 w-5" />
-      <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
+      <span className="text-[10px] font-bold uppercase tracking-[0.18em]">{label}</span>
     </button>
   );
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex min-h-screen bg-sky-50/30">
       {/* Admin Sidebar */}
-      <aside className="w-80 border-r border-emerald-deep/5 p-8 flex flex-col gap-12 sticky top-0 h-screen bg-white hidden lg:flex">
+      <aside className="hidden h-screen w-76 shrink-0 border-r border-emerald-deep/5 bg-white p-8 lg:sticky lg:top-0 lg:flex lg:flex-col lg:gap-12">
         <div className="flex flex-col">
           <span className="text-3xl font-heading font-bold tracking-tighter text-emerald-deep italic">Admin Panel</span>
           <span className="text-[8px] font-bold tracking-[0.4em] text-emerald-deep/20 uppercase mt-1">Koseli Management</span>
         </div>
 
         <nav className="flex flex-col gap-2">
-          <SidebarItem id="dashboard" label="Dashboard" icon={BarChart3} />
-          <SidebarItem id="products" label="Products" icon={Grid} />
-          <SidebarItem id="orders" label="Orders" icon={ShoppingBag} />
-          <SidebarItem id="users" label="Customers" icon={Users} />
-          <SidebarItem id="settings" label="Control Panel" icon={Shield} />
+          {adminTabs.map((tab) => (
+            <SidebarItem key={tab.id} id={tab.id} label={tab.label} icon={tab.icon} />
+          ))}
         </nav>
 
         <div className="mt-auto pt-8 border-t border-emerald-deep/5">
@@ -1627,59 +1628,60 @@ const AdminDashboard = ({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 md:p-16 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto px-4 pb-8 pt-4 sm:px-6 sm:pb-10 sm:pt-6 lg:px-10 lg:pb-16 lg:pt-10 xl:px-16">
         {/* Mobile Admin Navigation */}
-        <div className="lg:hidden mb-12 flex items-center justify-between bg-white p-4 rounded-2xl border border-emerald-deep/5 shadow-sm">
-          <div className="flex flex-col">
-            <span className="text-xl font-heading font-bold text-emerald-deep italic">Admin Panel</span>
-            <span className="text-[8px] font-bold text-emerald-deep/20 uppercase tracking-widest">{activeTab}</span>
-          </div>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-12 w-12 rounded-xl bg-emerald-deep/5 text-emerald-deep">
-                <LayoutDashboard className="h-6 w-6" />
+        <div className="sticky top-3 z-20 mb-6 space-y-3 lg:hidden">
+          <div className="rounded-[1.75rem] border border-emerald-deep/10 bg-white/95 p-4 shadow-sm backdrop-blur">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <span className="text-xl font-heading font-bold text-emerald-deep italic">Admin Panel</span>
+                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-emerald-deep/35">{activeAdminTab.label}</p>
+              </div>
+              <Button
+                variant="ghost"
+                className="h-11 rounded-xl bg-emerald-deep/5 px-4 text-emerald-deep hover:bg-emerald-deep/10"
+                onClick={onBack}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.15em]">Exit</span>
               </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-80 p-8 flex flex-col gap-12 bg-white">
-              <div className="flex flex-col">
-                <span className="text-3xl font-heading font-bold tracking-tighter text-emerald-deep italic">Admin Panel</span>
-                <span className="text-[8px] font-bold tracking-[0.4em] text-emerald-deep/20 uppercase mt-1">Koseli Management</span>
-              </div>
-              <nav className="flex flex-col gap-2">
-                <SidebarItem id="dashboard" label="Dashboard" icon={BarChart3} />
-                <SidebarItem id="products" label="Products" icon={Grid} />
-                <SidebarItem id="orders" label="Orders" icon={ShoppingBag} />
-                <SidebarItem id="users" label="Customers" icon={Users} />
-                <SidebarItem id="settings" label="Control Panel" icon={Shield} />
-              </nav>
-              <div className="mt-auto pt-8 border-t border-emerald-deep/5">
-                <Button 
-                  variant="ghost" 
-                  className="w-full flex items-center justify-start gap-4 px-6 py-4 rounded-2xl text-emerald-deep hover:bg-emerald-deep/5 transition-all"
-                  onClick={onBack}
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Exit Admin</span>
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-emerald-deep/60">
+              Mobile controls are simplified here so stock, orders, and quick actions stay easy to manage on the phone.
+            </p>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {adminTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-all ${
+                  activeTab === tab.id
+                    ? 'border-emerald-deep bg-emerald-deep text-white shadow-lg shadow-emerald-deep/15'
+                    : 'border-emerald-deep/10 bg-white text-emerald-deep/70'
+                }`}
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-16">
+        <header className="mb-8 flex flex-col justify-between gap-5 sm:mb-12 md:flex-row md:items-center md:gap-8">
           <div className="flex items-center gap-6">
             <div>
-              <h1 className="text-4xl md:text-6xl font-heading font-bold text-emerald-deep tracking-tighter italic capitalize">
-                {activeTab === 'settings' ? 'Control Panel' : activeTab}
+              <h1 className="text-3xl sm:text-4xl md:text-6xl font-heading font-bold text-emerald-deep tracking-tighter italic">
+                {activeAdminTab.label}
               </h1>
               <div className="flex items-center gap-3 mt-2">
                 <div className="h-2 w-2 rounded-full bg-emerald-deep animate-pulse" />
-                <p className="text-[10px] font-bold text-emerald-deep/40 uppercase tracking-[0.4em]">Live System Status: Operational</p>
+                <p className="text-[9px] sm:text-[10px] font-bold text-emerald-deep/40 uppercase tracking-[0.28em] sm:tracking-[0.4em]">Live System Status: Operational</p>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="outline" className="h-14 w-14 rounded-full border-emerald-deep/10 text-emerald-deep">
+            <Button variant="outline" className="h-11 w-11 rounded-full border-emerald-deep/10 text-emerald-deep sm:h-14 sm:w-14">
               <Download className="h-5 w-5" />
             </Button>
           </div>
@@ -1688,17 +1690,17 @@ const AdminDashboard = ({
         {activeTab === 'dashboard' && (
           <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
               {[
                 { label: 'Total Revenue', value: `Rs. ${stats.totalRevenue}`, icon: TrendingUp, trend: '+12.5%', isUp: true },
                 { label: 'Active Orders', value: stats.pendingCount, icon: ShoppingBag, trend: '+4', isUp: true },
                 { label: 'Avg. Order', value: `Rs. ${stats.avgOrderValue}`, icon: Zap, trend: '-2.1%', isUp: false },
-                { label: 'Total Customers', value: users.length, icon: Users, trend: '+8', isUp: true },
+                { label: 'Live Products', value: stats.liveProducts, icon: Cake, trend: `${products.length} total`, isUp: true },
               ].map((stat, i) => (
-                <div key={i} className="bg-white p-8 rounded-[2.5rem] border border-emerald-deep/5 shadow-sm space-y-4 hover:shadow-xl transition-all duration-500">
+                <div key={i} className="bg-white p-4 sm:p-6 md:p-8 rounded-[1.75rem] sm:rounded-[2.5rem] border border-emerald-deep/5 shadow-sm space-y-4 hover:shadow-xl transition-all duration-500">
                   <div className="flex items-center justify-between">
-                    <div className="h-12 w-12 rounded-2xl bg-emerald-deep/5 flex items-center justify-center text-emerald-deep">
-                      <stat.icon className="h-6 w-6" />
+                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-emerald-deep/5 flex items-center justify-center text-emerald-deep">
+                      <stat.icon className="h-5 w-5 sm:h-6 sm:w-6" />
                     </div>
                     <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-[9px] font-bold ${stat.isUp ? 'bg-emerald-deep/10 text-emerald-deep' : 'bg-emerald-deep/5 text-emerald-deep/60'}`}>
                       {stat.isUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
@@ -1706,8 +1708,8 @@ const AdminDashboard = ({
                     </div>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-emerald-deep/30 uppercase tracking-widest">{stat.label}</p>
-                    <p className="text-3xl font-heading font-bold text-emerald-deep mt-1">{stat.value}</p>
+                    <p className="text-[9px] sm:text-[10px] font-bold text-emerald-deep/30 uppercase tracking-[0.18em] sm:tracking-widest">{stat.label}</p>
+                    <p className="mt-1 text-xl sm:text-2xl md:text-3xl font-heading font-bold text-emerald-deep">{stat.value}</p>
                   </div>
                 </div>
               ))}
@@ -1715,15 +1717,15 @@ const AdminDashboard = ({
 
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] border border-emerald-deep/5 shadow-sm space-y-8">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-heading font-bold text-emerald-deep italic">Revenue Overview</h3>
+              <div className="lg:col-span-2 bg-white p-5 sm:p-8 md:p-10 rounded-[2rem] sm:rounded-[3rem] border border-emerald-deep/5 shadow-sm space-y-6 sm:space-y-8">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <h3 className="text-lg sm:text-xl font-heading font-bold text-emerald-deep italic">Revenue Overview</h3>
                   <select className="bg-emerald-deep/5 border-none rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-emerald-deep outline-none">
                     <option>Last 7 Days</option>
                     <option>Last 30 Days</option>
                   </select>
                 </div>
-                <div className="h-[350px] w-full">
+                <div className="h-[250px] sm:h-[320px] md:h-[350px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={revenueData}>
                       <defs>
@@ -1747,8 +1749,8 @@ const AdminDashboard = ({
               </div>
 
               <div className="flex flex-col gap-8">
-                <div className="bg-white p-10 rounded-[3rem] border border-emerald-deep/5 shadow-sm space-y-8 flex-1">
-                  <h3 className="text-xl font-heading font-bold text-emerald-deep italic">Sales by Category</h3>
+                <div className="bg-white p-5 sm:p-8 md:p-10 rounded-[2rem] sm:rounded-[3rem] border border-emerald-deep/5 shadow-sm space-y-6 sm:space-y-8 flex-1">
+                  <h3 className="text-lg sm:text-xl font-heading font-bold text-emerald-deep italic">Sales by Category</h3>
                   <div className="h-[200px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -1782,7 +1784,7 @@ const AdminDashboard = ({
                   </div>
                 </div>
 
-                <div className="bg-emerald-deep p-10 rounded-[3rem] shadow-2xl space-y-6 relative overflow-hidden">
+                <div className="bg-emerald-deep p-5 sm:p-8 md:p-10 rounded-[2rem] sm:rounded-[3rem] shadow-2xl space-y-6 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-1/2 h-full bg-white/5 -skew-x-12 translate-x-1/2" />
                   <div className="relative z-10">
                     <p className="text-[9px] font-bold text-emerald-deep uppercase tracking-[0.4em] mb-2">System Health</p>
@@ -1803,12 +1805,46 @@ const AdminDashboard = ({
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Recent Orders Table */}
-              <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] border border-emerald-deep/5 shadow-sm space-y-8">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-heading font-bold text-emerald-deep italic">Recent Masterpieces</h3>
-                  <Button variant="ghost" className="text-[10px] font-bold uppercase tracking-widest text-emerald-deep/40 hover:text-emerald-deep">View All Orders</Button>
+              <div className="lg:col-span-2 bg-white p-5 sm:p-8 md:p-10 rounded-[2rem] sm:rounded-[3rem] border border-emerald-deep/5 shadow-sm space-y-6 sm:space-y-8">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-lg sm:text-xl font-heading font-bold text-emerald-deep italic">Recent Masterpieces</h3>
+                  <Button variant="ghost" className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-deep/40 hover:text-emerald-deep">View All Orders</Button>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="space-y-3 md:hidden">
+                  {orders.slice(0, 4).map((order) => (
+                    <div key={order.id} className="rounded-[1.5rem] border border-emerald-deep/5 bg-emerald-deep/[0.02] p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-deep/35">Order ID</p>
+                          <p className="text-base font-heading font-bold italic text-emerald-deep">#{order.id.slice(-6).toUpperCase()}</p>
+                        </div>
+                        <Badge className={`px-3 py-1 rounded-full font-bold text-[9px] uppercase tracking-[0.15em] border-none ${
+                          order.status === 'delivered' ? 'bg-emerald-deep text-white' :
+                          order.status === 'pending' ? 'bg-emerald-deep/60 text-white' :
+                          order.status === 'cancelled' ? 'bg-emerald-deep/40 text-white' :
+                          'bg-emerald-deep/80 text-white'
+                        }`}>
+                          {order.status}
+                        </Badge>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-emerald-deep">{order.deliveryDetails.fullName}</p>
+                        <p className="text-xs text-emerald-deep/55">{order.deliveryDetails.phone}</p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-emerald-deep/70">Rs. {order.totalAmount}</p>
+                        <Button
+                          variant="ghost"
+                          className="h-10 rounded-full px-4 text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-deep"
+                          onClick={() => { setOrderFilter('all'); setActiveTab('orders'); }}
+                        >
+                          View
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="hidden overflow-x-auto md:block">
                   <table className="w-full text-left">
                     <thead>
                       <tr className="border-b border-emerald-deep/5">
@@ -1853,9 +1889,9 @@ const AdminDashboard = ({
               </div>
 
               {/* Recent Activity Feed */}
-              <div className="bg-white p-10 rounded-[3rem] border border-emerald-deep/5 shadow-sm space-y-8">
-                <h3 className="text-xl font-heading font-bold text-emerald-deep italic">Live Activity</h3>
-                <div className="space-y-8">
+              <div className="bg-white p-5 sm:p-8 md:p-10 rounded-[2rem] sm:rounded-[3rem] border border-emerald-deep/5 shadow-sm space-y-6 sm:space-y-8">
+                <h3 className="text-lg sm:text-xl font-heading font-bold text-emerald-deep italic">Live Activity</h3>
+                <div className="space-y-6">
                   {orders.slice(0, 6).map((order, i) => (
                     <div key={i} className="flex gap-4 relative">
                       {i !== 5 && <div className="absolute left-5 top-10 bottom-0 w-px bg-emerald-deep/5" />}
@@ -1882,20 +1918,20 @@ const AdminDashboard = ({
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="grid gap-6">
               {products.map((product) => (
-                <div key={product.id} className="bg-white p-8 rounded-[2.5rem] border border-emerald-deep/5 shadow-sm flex flex-col md:flex-row items-center gap-10 group hover:shadow-2xl transition-all duration-700">
-                  <div className="h-32 w-32 rounded-[2rem] overflow-hidden bg-muted shrink-0 border border-emerald-deep/5 shadow-lg">
+                <div key={product.id} className="bg-white p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-emerald-deep/5 shadow-sm flex flex-col md:flex-row items-center gap-5 sm:gap-8 md:gap-10 group hover:shadow-2xl transition-all duration-700">
+                  <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden bg-muted shrink-0 border border-emerald-deep/5 shadow-lg">
                     <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" referrerPolicy="no-referrer" />
                   </div>
                   <div className="flex-1 space-y-2 text-center md:text-left">
-                    <h4 className="font-heading font-bold text-2xl text-emerald-deep italic">{product.name}</h4>
+                    <h4 className="font-heading font-bold text-xl sm:text-2xl text-emerald-deep italic">{product.name}</h4>
                     <p className="text-[10px] text-emerald-deep/30 font-bold uppercase tracking-[0.3em]">{product.category}</p>
                     <div className="flex items-baseline gap-1 justify-center md:justify-start mt-4">
                       <span className="text-[10px] font-bold text-emerald-deep/20">Rs.</span>
                       <span className="font-heading font-bold text-2xl text-emerald-deep/60 tracking-tighter">{product.price}</span>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center justify-center gap-6">
-                    <div className="flex items-center gap-4 bg-emerald-deep/5 px-6 py-3 rounded-full border border-emerald-deep/5">
+                  <div className="flex w-full flex-col items-stretch gap-4 md:w-auto md:flex-row md:flex-wrap md:items-center md:justify-center md:gap-6">
+                    <div className="flex items-center justify-between gap-3 bg-emerald-deep/5 px-4 py-3 rounded-[1.25rem] md:rounded-full border border-emerald-deep/5">
                       <div className={`h-2 w-2 rounded-full ${product.inStock ? 'bg-emerald-deep animate-pulse' : 'bg-emerald-deep/20'}`} />
                       <span className={`text-[10px] font-bold uppercase tracking-widest ${product.inStock ? 'text-emerald-deep' : 'text-emerald-deep/40'}`}>
                         {product.inStock ? 'Available' : 'Sold Out'}
@@ -1903,17 +1939,17 @@ const AdminDashboard = ({
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className={`h-10 px-6 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${product.inStock ? 'bg-emerald-deep text-white hover:bg-emerald-deep/90' : 'bg-emerald-deep/20 text-emerald-deep hover:bg-emerald-deep/30'}`}
+                        className={`h-10 px-5 rounded-full text-[9px] font-bold uppercase tracking-[0.15em] transition-all ${product.inStock ? 'bg-emerald-deep text-white hover:bg-emerald-deep/90' : 'bg-emerald-deep/20 text-emerald-deep hover:bg-emerald-deep/30'}`}
                         onClick={() => onToggleStock(product.id, !product.inStock)}
                       >
                         Toggle
                       </Button>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center gap-3">
                       <Button 
                         variant="outline" 
                         size="icon" 
-                        className="h-14 w-14 rounded-full border-emerald-deep/10 text-emerald-deep hover:bg-emerald-deep hover:text-white transition-all shadow-sm"
+                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full border-emerald-deep/10 text-emerald-deep hover:bg-emerald-deep hover:text-white transition-all shadow-sm"
                         onClick={() => onEditProduct(product)}
                       >
                         <Edit3 className="h-5 w-5" />
@@ -1921,7 +1957,7 @@ const AdminDashboard = ({
                       <Button 
                         variant="outline" 
                         size="icon" 
-                        className="h-14 w-14 rounded-full border-emerald-deep/10 text-emerald-deep hover:bg-emerald-deep hover:text-white transition-all shadow-sm"
+                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full border-emerald-deep/10 text-emerald-deep hover:bg-emerald-deep hover:text-white transition-all shadow-sm"
                         onClick={() => onDeleteProduct(product.id)}
                       >
                         <Trash2 className="h-5 w-5" />
@@ -1936,12 +1972,12 @@ const AdminDashboard = ({
 
         {activeTab === 'orders' && (
           <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex flex-wrap gap-4">
+            <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
               {['all', 'pending', 'confirmed', 'picked', 'ready', 'delivered', 'cancelled'].map((status) => (
                 <Button
                   key={status}
                   variant={orderFilter === status ? 'default' : 'outline'}
-                  className={`rounded-full px-8 h-12 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                  className={`shrink-0 rounded-full px-5 sm:px-8 h-11 sm:h-12 text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-widest transition-all ${
                     orderFilter === status ? 'bg-emerald-deep text-white shadow-xl shadow-emerald-deep/20' : 'border-emerald-deep/10 text-emerald-deep hover:bg-emerald-deep/5'
                   }`}
                   onClick={() => setOrderFilter(status as any)}
@@ -1953,12 +1989,12 @@ const AdminDashboard = ({
 
             <div className="grid gap-8">
               {filteredOrders.map((order) => (
-                <div key={order.id} className="bg-white p-10 rounded-[3.5rem] border border-emerald-deep/5 shadow-sm space-y-10 hover:shadow-2xl transition-all duration-700">
-                  <div className="flex flex-col md:flex-row justify-between gap-8 border-b border-emerald-deep/5 pb-10">
+                <div key={order.id} className="bg-white p-5 sm:p-7 md:p-10 rounded-[2rem] sm:rounded-[3rem] border border-emerald-deep/5 shadow-sm space-y-6 sm:space-y-8 hover:shadow-2xl transition-all duration-700">
+                  <div className="flex flex-col md:flex-row justify-between gap-6 border-b border-emerald-deep/5 pb-6 sm:pb-8">
                     <div className="space-y-2">
-                      <div className="flex items-center gap-4">
-                        <h4 className="font-heading font-bold text-3xl text-emerald-deep italic">Order #{order.readableId || order.id.slice(-6).toUpperCase()}</h4>
-                        <Badge className={`px-4 py-1.5 rounded-full font-bold text-[9px] uppercase tracking-widest border-none ${
+                      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
+                        <h4 className="font-heading font-bold text-2xl sm:text-3xl text-emerald-deep italic">Order #{order.readableId || order.id.slice(-6).toUpperCase()}</h4>
+                        <Badge className={`px-4 py-1.5 rounded-full font-bold text-[9px] uppercase tracking-[0.15em] border-none ${
                           order.status === 'delivered' ? 'bg-emerald-deep text-white' :
                           order.status === 'cancelled' ? 'bg-emerald-deep/40 text-white' :
                           'bg-emerald-deep text-white'
@@ -1968,9 +2004,9 @@ const AdminDashboard = ({
                       </div>
                       <p className="text-[10px] text-emerald-deep/30 font-bold uppercase tracking-[0.4em]">Placed on {new Date(order.createdAt?.toDate?.() || order.createdAt).toLocaleString()}</p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center">
                       <div className="flex flex-col gap-2">
-                        <span className="text-[9px] font-bold text-emerald-deep/30 uppercase tracking-widest ml-4">Order Status</span>
+                        <span className="text-[9px] font-bold text-emerald-deep/30 uppercase tracking-widest sm:ml-4">Order Status</span>
                         <StatusPicker 
                           currentStatus={order.status} 
                           timeline={order.timeline} 
@@ -1979,7 +2015,7 @@ const AdminDashboard = ({
                       </div>
 
                       <div className="flex flex-col gap-2">
-                        <span className="text-[9px] font-bold text-emerald-deep/30 uppercase tracking-widest ml-4">Payment</span>
+                        <span className="text-[9px] font-bold text-emerald-deep/30 uppercase tracking-widest sm:ml-4">Payment</span>
                         <ArtisanSelect 
                           value={order.paymentStatus}
                           options={[
@@ -1993,13 +2029,13 @@ const AdminDashboard = ({
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-3 gap-12">
+                  <div className="grid gap-6 sm:gap-8 md:grid-cols-3 md:gap-12">
                     <div className="space-y-6">
                       <div className="flex items-center gap-3">
                         <UserIcon className="h-4 w-4 text-emerald-deep" />
                         <h5 className="text-[10px] font-bold text-emerald-deep uppercase tracking-[0.3em]">Customer Info</h5>
                       </div>
-                      <div className="space-y-2 bg-emerald-deep/[0.02] p-6 rounded-3xl border border-emerald-deep/5">
+                      <div className="space-y-2 bg-emerald-deep/[0.02] p-5 sm:p-6 rounded-[1.75rem] sm:rounded-3xl border border-emerald-deep/5">
                         <p className="text-lg font-heading font-bold text-emerald-deep italic">{order.deliveryDetails.fullName}</p>
                         <p className="text-sm font-medium text-emerald-deep/60">{order.deliveryDetails.phone}</p>
                         <p className="text-sm text-emerald-deep/40 leading-relaxed italic">{order.deliveryDetails.address}</p>
@@ -2017,26 +2053,26 @@ const AdminDashboard = ({
                       </div>
                       <div className="space-y-4">
                         {order.items.map((item, i) => (
-                          <div key={i} className="flex items-center justify-between p-4 rounded-2xl hover:bg-emerald-deep/[0.02] transition-colors border border-transparent hover:border-emerald-deep/5">
+                          <div key={i} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 rounded-2xl hover:bg-emerald-deep/[0.02] transition-colors border border-transparent hover:border-emerald-deep/5">
                             <div className="flex items-center gap-4">
                               <div className="h-12 w-12 rounded-xl bg-emerald-deep/5 flex items-center justify-center text-emerald-deep font-heading font-bold italic">
                                 {item.quantity}x
                               </div>
                               <span className="font-heading font-bold text-lg text-emerald-deep italic">{item.cakeName}</span>
                             </div>
-                            <span className="font-bold text-emerald-deep/40">Rs. {item.price * item.quantity}</span>
+                            <span className="font-bold text-emerald-deep/40 sm:text-right">Rs. {item.price * item.quantity}</span>
                           </div>
                         ))}
-                        <div className="pt-6 border-t border-emerald-deep/5 flex justify-between items-center px-4">
+                        <div className="pt-6 border-t border-emerald-deep/5 flex items-center justify-between gap-4 px-1 sm:px-4">
                           <span className="text-[11px] font-bold text-emerald-deep/30 uppercase tracking-[0.4em]">Total Value</span>
-                          <span className="text-3xl font-heading font-bold text-emerald-deep italic">Rs. {order.totalAmount}</span>
+                          <span className="text-2xl sm:text-3xl font-heading font-bold text-emerald-deep italic">Rs. {order.totalAmount}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Timeline */}
-                  <div className="space-y-6 pt-10 border-t border-emerald-deep/5">
+                  <div className="space-y-6 pt-6 sm:pt-10 border-t border-emerald-deep/5">
                     <div className="flex items-center gap-3">
                       <History className="h-4 w-4 text-emerald-deep" />
                       <h5 className="text-[10px] font-bold text-emerald-deep uppercase tracking-[0.3em]">Activity Log</h5>
@@ -2057,61 +2093,11 @@ const AdminDashboard = ({
           </div>
         )}
 
-        {activeTab === 'users' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="bg-white rounded-[3rem] border border-emerald-deep/5 shadow-sm overflow-hidden">
-              <table className="w-full text-left">
-                <thead className="bg-emerald-deep/5">
-                  <tr>
-                    <th className="px-10 py-8 text-[10px] font-bold text-emerald-deep/40 uppercase tracking-widest">Customer</th>
-                    <th className="px-10 py-8 text-[10px] font-bold text-emerald-deep/40 uppercase tracking-widest">Contact</th>
-                    <th className="px-10 py-8 text-[10px] font-bold text-emerald-deep/40 uppercase tracking-widest">Role</th>
-                    <th className="px-10 py-8 text-[10px] font-bold text-emerald-deep/40 uppercase tracking-widest">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-emerald-deep/5">
-                  {users.map((u) => (
-                    <tr key={u.uid} className="group hover:bg-emerald-deep/[0.01] transition-colors">
-                      <td className="px-10 py-8">
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-full bg-emerald-deep/10 flex items-center justify-center border border-emerald-deep/5 overflow-hidden">
-                            {u.photoURL ? <img src={u.photoURL} alt="" className="h-full w-full object-cover" /> : <UserIcon className="h-5 w-5 text-emerald-deep/40" />}
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-base font-bold text-emerald-deep italic">{u.displayName || 'Anonymous Artisan'}</span>
-                            <span className="text-[10px] text-emerald-deep/30 font-bold uppercase tracking-widest">UID: {u.uid.slice(0, 8)}...</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-10 py-8">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-emerald-deep/60">{u.email}</span>
-                        </div>
-                      </td>
-                      <td className="px-10 py-8">
-                        <Badge className={`px-4 py-1 rounded-full font-bold text-[9px] uppercase tracking-widest border-none ${u.role === 'admin' ? 'bg-emerald-deep text-white' : 'bg-emerald-deep/10 text-emerald-deep/60'}`}>
-                          {u.role || 'customer'}
-                        </Badge>
-                      </td>
-                      <td className="px-10 py-8">
-                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full cursor-not-allowed opacity-20">
-                          <Bell className="h-4 w-4 text-emerald-deep/40" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-
         {activeTab === 'settings' && (
           <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="grid gap-6 md:grid-cols-2 md:gap-8">
               {/* Quick Actions */}
-              <div className="bg-white p-10 rounded-[3rem] border border-emerald-deep/5 shadow-sm space-y-8">
+              <div className="bg-white p-5 sm:p-8 md:p-10 rounded-[2rem] sm:rounded-[3rem] border border-emerald-deep/5 shadow-sm space-y-6 sm:space-y-8">
                 <div className="flex items-center gap-4">
                   <div className="h-12 w-12 rounded-2xl bg-emerald-deep/5 flex items-center justify-center text-emerald-deep font-bold">
                     <Zap className="h-6 w-6" />
@@ -2121,7 +2107,7 @@ const AdminDashboard = ({
                 <div className="grid gap-4">
                   <Button 
                     variant="outline" 
-                    className="h-20 justify-start px-8 rounded-2xl border-emerald-deep/10 hover:bg-emerald-deep hover:text-white transition-all group"
+                    className="h-16 sm:h-20 justify-start px-6 sm:px-8 rounded-2xl border-emerald-deep/10 hover:bg-emerald-deep hover:text-white transition-all group"
                     onClick={onAddProduct}
                   >
                     <Plus className="h-5 w-5 mr-4 text-emerald-deep group-hover:text-white" />
@@ -2131,7 +2117,7 @@ const AdminDashboard = ({
               </div>
 
               {/* Order Tracking */}
-              <div className="bg-white p-10 rounded-[3rem] border border-emerald-deep/5 shadow-sm space-y-8">
+              <div className="bg-white p-5 sm:p-8 md:p-10 rounded-[2rem] sm:rounded-[3rem] border border-emerald-deep/5 shadow-sm space-y-6 sm:space-y-8">
                 <div className="flex items-center gap-4">
                   <div className="h-12 w-12 rounded-2xl bg-emerald-deep/5 flex items-center justify-center text-emerald-deep font-bold">
                     <Search className="h-6 w-6" />
@@ -2142,10 +2128,10 @@ const AdminDashboard = ({
                   <p className="text-[10px] font-bold text-emerald-deep/40 uppercase tracking-widest leading-relaxed">
                     Quickly find an order by its unique ID (e.g., ORD-1234 or Firestore ID).
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row">
                     <Input 
                       placeholder="ORD-XXXX..." 
-                      className="h-14 rounded-xl border-emerald-deep/10"
+                      className="h-12 sm:h-14 rounded-xl border-emerald-deep/10"
                       value={trackId}
                       onChange={(e) => setTrackId(e.target.value)}
                       onKeyDown={(e) => {
@@ -2162,7 +2148,7 @@ const AdminDashboard = ({
                       }}
                     />
                     <Button 
-                      className="h-14 bg-emerald-deep rounded-xl px-6"
+                      className="h-12 sm:h-14 bg-emerald-deep rounded-xl px-6"
                       onClick={() => {
                         const id = trackId.toUpperCase();
                         const found = orders.find(o => (o.readableId && o.readableId === id) || o.id.includes(id) || o.id === id);
@@ -2181,7 +2167,7 @@ const AdminDashboard = ({
               </div>
             </div>
             
-            <div className="bg-emerald-deep/5 p-12 rounded-[4rem] text-center space-y-6">
+            <div className="bg-emerald-deep/5 p-6 sm:p-10 md:p-12 rounded-[2rem] sm:rounded-[4rem] text-center space-y-6">
               <Shield className="h-12 w-12 text-emerald-deep mx-auto opacity-20" />
               <div className="space-y-2">
                 <h4 className="font-heading font-bold text-2xl text-emerald-deep italic">System Integrity</h4>
@@ -2233,6 +2219,28 @@ const formatDeliverySlotLabel = (time: string) =>
     hour: 'numeric',
     hour12: true
   });
+
+const DIALOG_ACTIONS_LAYOUT =
+  'mt-auto shrink-0 flex flex-col-reverse gap-3 border-t border-emerald-deep/10 bg-white/98 px-4 py-4 backdrop-blur sm:flex-row sm:px-5 sm:py-5';
+const DIALOG_ACTION_BASE =
+  'min-h-[3.25rem] sm:h-14 rounded-2xl px-4 py-3 text-[11px] sm:text-[12px] font-semibold leading-tight tracking-[0.08em] sm:tracking-[0.16em] whitespace-normal text-center uppercase';
+const DIALOG_ACTION_PRIMARY =
+  `${DIALOG_ACTION_BASE} bg-emerald-deep text-white hover:bg-emerald-deep/90 shadow-lg shadow-emerald-deep/15 transition-all active:scale-[0.98]`;
+const DIALOG_ACTION_SECONDARY =
+  `${DIALOG_ACTION_BASE} bg-transparent text-emerald-deep/70 hover:bg-emerald-deep/[0.04] hover:text-emerald-deep transition-all`;
+const DIALOG_ACTION_OUTLINE =
+  `${DIALOG_ACTION_BASE} border border-emerald-deep/10 bg-white text-emerald-deep hover:bg-emerald-deep/5 transition-all`;
+const DIALOG_ACTION_DANGER =
+  `${DIALOG_ACTION_BASE} bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/10 transition-all active:scale-[0.98]`;
+
+const TESTIMONIAL_WARD_LABELS = [
+  'Bheemdatt Municipality, Ward 04',
+  'Bheemdatt Municipality, Ward 04',
+  'Bheemdatt Municipality, Ward 08',
+  'Bheemdatt Municipality, Ward 08',
+  'Bheemdatt Municipality, Ward 12',
+  'Bheemdatt Municipality, Ward 12'
+] as const;
 
 const getOrCreateCartSessionId = () => {
   if (typeof window === 'undefined') return 'server-session';
@@ -2371,7 +2379,6 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
   const [allOrders, setAllOrders] = useState<Order[]>([]);
-  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [prevOrdersCount, setPrevOrdersCount] = useState<number | null>(null);
   const [prevCancelledCount, setPrevCancelledCount] = useState<number | null>(null);
   const [wishlist, setWishlist] = useState<string[]>([]);
@@ -2393,6 +2400,18 @@ export default function App() {
   const [simulatedOrder, setSimulatedOrder] = useState<Order | null>(null);
   const userOrdersRawRef = useRef<Order[]>([]);
   const allOrdersRawRef = useRef<Order[]>([]);
+  const isAnyDialogOpen =
+    isAuthOpen ||
+    isOrderModalOpen ||
+    isConfirmationOpen ||
+    isDetailsModalOpen ||
+    isOrdersOpen ||
+    isProfileOpen ||
+    isCancelModalOpen ||
+    isAddToCartModalOpen ||
+    isProductFormOpen ||
+    isSimulatingPayment ||
+    isDeleteConfirmOpen;
   const [checkoutReferenceTime, setCheckoutReferenceTime] = useState(() => new Date());
   const minimumDeliveryDateTime = useMemo(
     () => new Date(checkoutReferenceTime.getTime() + MIN_DELIVERY_NOTICE_HOURS * 60 * 60 * 1000),
@@ -2676,13 +2695,6 @@ export default function App() {
             console.error('All orders subscription error:', error);
           });
 
-          // Fetch all users for admin
-          const qUsers = query(collection(db, 'users'));
-          onSnapshot(qUsers, (snapshot) => {
-            setAllUsers(snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as any as UserProfile)));
-          }, (error) => {
-            console.error('Users subscription error:', error);
-          });
         }
       } else {
         setIsAdmin(false);
@@ -3573,7 +3585,7 @@ export default function App() {
                         <section className="mt-20 md:mt-32 mb-16 md:mb-20">
                           <div className="text-center mb-12 md:mb-20 space-y-4">
                             <p className="text-[10px] font-bold text-emerald-deep/30 uppercase tracking-[0.6em]">Testimonials</p>
-                            <h3 className="text-3xl md:text-7xl font-heading font-medium text-emerald-deep italic">Words From Our <br /> Happy Clients</h3>
+                            <h3 className="text-3xl md:text-7xl font-heading font-medium text-emerald-deep italic">Happy Clients Across <br /> Bheemdatt Wards</h3>
                           </div>
                           <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                             {[
@@ -3595,7 +3607,7 @@ export default function App() {
                                   <div className="h-12 w-12 rounded-full bg-emerald-deep/5 flex items-center justify-center font-bold text-emerald-deep">{t.name[0]}</div>
                                   <div>
                                     <h4 className="text-sm font-bold text-emerald-deep">{t.name}</h4>
-                                    <p className="text-[10px] text-emerald-deep/40 font-bold uppercase tracking-widest">{t.loc}</p>
+                                    <p className="text-[10px] text-emerald-deep/40 font-bold uppercase tracking-widest">{TESTIMONIAL_WARD_LABELS[i] || t.loc}</p>
                                   </div>
                                 </div>
                               </div>
@@ -3912,7 +3924,6 @@ export default function App() {
                     <AdminDashboard 
                       products={products}
                       orders={allOrders}
-                      users={allUsers}
                       onAddProduct={() => {
                         setEditingProduct(null);
                         setProductFormData({
@@ -4038,18 +4049,19 @@ export default function App() {
           </div>
         </footer>
 
-
-      <BottomNav 
-        cartCount={cart.length} 
-        onOpenCart={() => setActiveView('cart')} 
-        onOpenAuth={() => setIsAuthOpen(true)}
-        user={user}
-        onOpenOrders={() => setActiveView('orders')}
-        onOpenProfile={() => setActiveView('profile')}
-        activeView={activeView}
-        setView={setActiveView}
-        isAdmin={isAdmin}
-      />
+      {activeView !== 'admin' && (
+        <BottomNav 
+          cartCount={cart.length} 
+          onOpenCart={() => setActiveView('cart')} 
+          onOpenAuth={() => setIsAuthOpen(true)}
+          user={user}
+          onOpenOrders={() => setActiveView('orders')}
+          onOpenProfile={() => setActiveView('profile')}
+          activeView={activeView}
+          setView={setActiveView}
+          isAdmin={isAdmin}
+        />
+      )}
 
 
       <Dialog open={isAuthOpen} onOpenChange={setIsAuthOpen}>
@@ -4107,14 +4119,14 @@ export default function App() {
             
             <div className="grid grid-cols-1 gap-4">
               <Button 
-                className="h-12 sm:h-14 rounded-[1.5rem] bg-red-600 text-white font-bold text-[10px] uppercase tracking-[0.25em] hover:bg-red-700 shadow-xl shadow-red-600/10 transition-all active:scale-95"
+                className={DIALOG_ACTION_DANGER}
                 onClick={handleCancelOrder}
               >
                 Yes, Archive Request
               </Button>
               <Button 
                 variant="ghost" 
-                className="h-12 sm:h-14 rounded-[1.5rem] text-emerald-deep/30 font-bold text-[10px] uppercase tracking-[0.25em] hover:bg-emerald-deep/[0.03] hover:text-emerald-deep transition-all"
+                className={DIALOG_ACTION_SECONDARY}
                 onClick={() => setIsCancelModalOpen(false)}
               >
                 No, Maintain Collection
@@ -4157,20 +4169,20 @@ export default function App() {
               </div>
               <div className="space-y-3">
                 <Label className="text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-deep/40 ml-2">Masterpiece Quantity</Label>
-                <div className="flex items-center gap-4 bg-emerald-deep/[0.03] w-fit p-2 rounded-[1.25rem] border border-emerald-deep/5">
+                <div className="flex w-full sm:w-fit items-center justify-between gap-4 bg-emerald-deep/[0.03] p-2 rounded-[1.25rem] border border-emerald-deep/5">
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-10 w-10 rounded-xl bg-white shadow-sm text-emerald-deep hover:bg-emerald-deep hover:text-white transition-all"
+                    className="h-11 w-11 rounded-xl bg-white shadow-sm text-emerald-deep hover:bg-emerald-deep hover:text-white transition-all"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
-                  <span className="font-heading font-bold text-2xl min-w-[30px] text-center text-emerald-deep italic">{quantity}</span>
+                  <span className="font-heading font-bold text-2xl min-w-[52px] text-center text-emerald-deep italic">{quantity}</span>
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-10 w-10 rounded-xl bg-white shadow-sm text-emerald-deep hover:bg-emerald-deep hover:text-white transition-all"
+                    className="h-11 w-11 rounded-xl bg-white shadow-sm text-emerald-deep hover:bg-emerald-deep hover:text-white transition-all"
                     onClick={() => setQuantity(quantity + 1)}
                   >
                     <Plus className="h-4 w-4" />
@@ -4179,16 +4191,16 @@ export default function App() {
               </div>
             </div>
             
-            <div className="flex flex-col-reverse sm:flex-row gap-3 pt-5 border-t border-emerald-deep/5">
+            <div className={DIALOG_ACTIONS_LAYOUT}>
               <Button 
                 variant="ghost" 
-                className="flex-1 h-12 sm:h-14 rounded-[1.5rem] text-[10px] uppercase font-bold tracking-[0.25em] text-emerald-deep/40 hover:text-emerald-deep"
+                className={`flex-1 ${DIALOG_ACTION_SECONDARY}`}
                 onClick={() => setIsDetailsModalOpen(false)}
               >
                 Cancel
               </Button>
               <Button 
-                className="flex-[2] h-12 sm:h-14 rounded-[1.5rem] bg-emerald-deep hover:bg-emerald-deep/90 text-white font-bold text-[10px] uppercase tracking-[0.25em] shadow-xl shadow-emerald-deep/20 transition-all active:scale-95"
+                className={`flex-[1.2] ${DIALOG_ACTION_PRIMARY}`}
                 onClick={confirmAddToCart}
               >
                 Add To Collection
@@ -4211,7 +4223,7 @@ export default function App() {
             </DialogHeader>
           </div>
           <div className="flex-1 p-4 sm:p-5 md:p-6 overflow-y-auto custom-scrollbar min-h-0 relative">
-            <div className="space-y-6 pb-4">
+            <div className="space-y-6 pb-6">
               {/* Delivery Info */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -4388,16 +4400,16 @@ export default function App() {
               </div>
             </div>
           </div>
-          <div className="p-4 sm:p-5 bg-gray-50 flex flex-col-reverse sm:flex-row gap-3 shrink-0 border-t border-emerald-deep/10">
+          <div className={DIALOG_ACTIONS_LAYOUT}>
             <Button 
               variant="ghost" 
-              className="flex-1 h-11 rounded-xl font-bold uppercase tracking-[0.12em] text-[10px] text-emerald-deep/50 hover:text-emerald-deep"
+              className={`flex-1 ${DIALOG_ACTION_SECONDARY}`}
               onClick={() => setIsOrderModalOpen(false)}
             >
               Continue Browsing
             </Button>
             <Button 
-              className="flex-[2] bg-emerald-deep hover:bg-emerald-deep/90 text-white h-11 rounded-xl font-bold uppercase tracking-[0.12em] text-[10px] shadow-lg shadow-emerald-deep/15 transition-all"
+              className={`flex-[1.2] ${DIALOG_ACTION_PRIMARY}`}
               onClick={() => {
                 const errors: { [key: string]: string } = {};
                 if (!deliveryDetails.fullName.trim()) errors.fullName = 'Full Name is required';
@@ -4435,7 +4447,7 @@ export default function App() {
             </DialogHeader>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-5 sm:p-6 md:p-8 custom-scrollbar space-y-8">
+          <div className="flex-1 overflow-y-auto p-5 sm:p-6 md:p-8 custom-scrollbar space-y-8 pb-6">
             {/* Items Summary */}
             <div className="space-y-5">
               <p className="text-[10px] font-bold text-emerald-deep uppercase tracking-[0.35em] flex items-center gap-4">
@@ -4552,10 +4564,10 @@ export default function App() {
             </div>
           </div>
           
-          <div className="p-4 sm:p-5 bg-gray-50 flex gap-4 shrink-0">
+          <div className={DIALOG_ACTIONS_LAYOUT}>
             <Button 
               variant="ghost" 
-              className="flex-1 h-12 rounded-xl font-bold uppercase tracking-[0.25em] text-[10px] text-gray-400 hover:text-emerald-deep"
+              className={`flex-1 ${DIALOG_ACTION_SECONDARY}`}
               onClick={() => {
                 setIsConfirmationOpen(false);
                 setIsOrderModalOpen(true);
@@ -4837,16 +4849,16 @@ export default function App() {
               </div>
             </div>
           </div>
-          <div className="p-4 sm:p-5 md:p-6 bg-gray-50 flex flex-col-reverse sm:flex-row gap-3 mt-auto">
+          <div className={DIALOG_ACTIONS_LAYOUT}>
             <Button 
               variant="ghost" 
-              className="flex-1 h-12 sm:h-14 rounded-2xl font-bold uppercase tracking-[0.25em] text-[10px] text-emerald-deep/40 hover:text-emerald-deep" 
+              className={`flex-1 ${DIALOG_ACTION_SECONDARY}`} 
               onClick={() => setIsProductFormOpen(false)}
             >
               Archive Draft
             </Button>
             <Button 
-              className="flex-[2] h-12 sm:h-14 bg-emerald-deep hover:bg-emerald-deep/90 text-white rounded-2xl font-bold uppercase tracking-[0.25em] text-[10px] shadow-xl shadow-emerald-deep/20 transition-all active:scale-95" 
+              className={`flex-[1.2] ${DIALOG_ACTION_PRIMARY}`} 
               onClick={handleSaveProduct}
             >
               Finalize Masterpiece
@@ -4898,7 +4910,7 @@ export default function App() {
                 </div>
                 
                 <Button 
-                  className={`w-full h-12 sm:h-14 rounded-[1.5rem] text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] shadow-xl transition-all hover:scale-[1.01] active:scale-[0.98] ${paymentMethod === 'esewa' ? 'bg-[#60bb46] hover:bg-[#52a13b] shadow-[#60bb46]/20' : 'bg-[#5c2d91] hover:bg-[#4d2678] shadow-[#5c2d91]/20'}`}
+                  className={`w-full ${DIALOG_ACTION_BASE} shadow-xl transition-all hover:scale-[1.01] active:scale-[0.98] ${paymentMethod === 'esewa' ? 'bg-[#60bb46] hover:bg-[#52a13b] shadow-[#60bb46]/20 text-white' : 'bg-[#5c2d91] hover:bg-[#4d2678] shadow-[#5c2d91]/20 text-white'}`}
                   onClick={finalizeOnlinePayment}
                 >
                   Confirm & Transfer Collection
@@ -4942,7 +4954,7 @@ export default function App() {
               )}
 
               <Button 
-                className="w-full h-12 sm:h-14 rounded-2xl bg-emerald-deep text-white font-bold text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-emerald-deep/20 hover:scale-105 active:scale-95 transition-all"
+                className={`w-full ${DIALOG_ACTION_PRIMARY}`}
                 onClick={() => {
                   setIsSimulatingPayment(false);
                   navigate('/orders');
@@ -4974,14 +4986,14 @@ export default function App() {
             </p>
             <div className="flex flex-col gap-4">
               <Button 
-                className="h-12 sm:h-14 rounded-[1.5rem] bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] uppercase tracking-[0.25em] shadow-xl shadow-red-600/10 transition-all active:scale-95"
+                className={DIALOG_ACTION_DANGER}
                 onClick={confirmDeleteProduct}
               >
                 Yes, Delete Permanently
               </Button>
               <Button 
                 variant="ghost" 
-                className="h-12 sm:h-14 rounded-[1.5rem] font-bold uppercase tracking-[0.25em] text-[10px] text-gray-400 hover:text-emerald-deep"
+                className={DIALOG_ACTION_SECONDARY}
                 onClick={() => setIsDeleteConfirmOpen(false)}
               >
                 Retain Masterpiece
@@ -4991,13 +5003,13 @@ export default function App() {
         </DialogContent>
       </Dialog>
       <AnimatePresence>
-        {showBackToTop && (
+        {showBackToTop && !isAnyDialogOpen && (
           <motion.button
             initial={{ opacity: 0, scale: 0, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0, y: 20 }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-24 md:bottom-12 right-6 md:right-12 h-14 w-14 md:h-16 md:w-16 bg-white text-emerald-deep rounded-full shadow-[0_20px_50px_rgba(0,174,239,0.3)] flex items-center justify-center z-[100] hover:scale-110 active:scale-95 transition-all border border-emerald-deep/10"
+            className="fixed bottom-[7.75rem] left-4 md:left-auto md:bottom-12 md:right-12 h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 bg-white text-emerald-deep rounded-full shadow-[0_20px_50px_rgba(0,174,239,0.3)] flex items-center justify-center z-[100] hover:scale-110 active:scale-95 transition-all border border-emerald-deep/10"
           >
             <ArrowUp className="h-6 w-6" strokeWidth={3} />
           </motion.button>
