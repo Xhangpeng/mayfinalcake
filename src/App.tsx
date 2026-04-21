@@ -462,7 +462,7 @@ const CartPage = ({
             <div className="space-y-3">
               <Label className="text-[10px] font-bold text-emerald-deep uppercase tracking-widest ml-1">Payment Method</Label>
               <div className="grid grid-cols-3 gap-2">
-                {[
+                {[  
                   { id: 'esewa', label: 'ESEWA' },
                   { id: 'khalti', label: 'KHALTI' },
                   { id: 'cod', label: 'COD' }
@@ -471,6 +471,7 @@ const CartPage = ({
                     key={method.id}
                     variant={paymentMethod === method.id ? 'default' : 'outline'}
                     className={`h-12 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all ${paymentMethod === method.id ? 'bg-emerald-deep text-white shadow-lg' : 'border-emerald-deep/10 text-emerald-deep hover:bg-emerald-deep/5'}`}
+                    disabled={isSubmittingOrder}
                     onClick={() => setPaymentMethod(method.id as any)}
                   >
                     {method.label}
@@ -481,6 +482,7 @@ const CartPage = ({
 
             <Button 
               className="w-full h-14 bg-emerald-deep text-white hover:bg-emerald-deep/90 rounded-xl font-bold text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-deep/20 transition-all flex items-center justify-center gap-3 group"
+              disabled={isSubmittingOrder || cart.length === 0}
               onClick={() => onCheckout(paymentMethod)}
             >
               Place Artisan Order
@@ -2041,6 +2043,7 @@ const AdminDashboard = ({
                         <p className="text-sm text-emerald-deep/40 leading-relaxed italic">{order.deliveryDetails.address}</p>
                         <div className="pt-4 flex items-center gap-2">
                           <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest border-emerald-deep/10 text-emerald-deep/60">{order.paymentMethod.toUpperCase()}</Badge>
+                          <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest border-emerald-deep/10 text-emerald-deep/60">{getPaymentStatusLabel(order)}</Badge>
                           <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest border-emerald-deep/10 text-emerald-deep/60">{order.deliveryDetails.deliveryMethod}</Badge>
                         </div>
                       </div>
@@ -2232,6 +2235,10 @@ const DIALOG_ACTION_OUTLINE =
   `${DIALOG_ACTION_BASE} border border-emerald-deep/10 bg-white text-emerald-deep hover:bg-emerald-deep/5 transition-all`;
 const DIALOG_ACTION_DANGER =
   `${DIALOG_ACTION_BASE} bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/10 transition-all active:scale-[0.98]`;
+const SHOP_MAP_EMBED_SRC =
+  'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2398.138907613912!2d80.12559109226308!3d28.961920860341632!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39a1ab006ca049cd%3A0xdae0567f45a5bbf4!2skoseli%20cake%20shop!5e0!3m2!1sen!2sin!4v1776746000904!5m2!1sen!2sin';
+const ORDER_SUBMISSION_COOLDOWN_MS = 4000;
+const SIGN_IN_RATE_LIMIT_MS = 8000;
 
 const TESTIMONIAL_WARD_LABELS = [
   'Bheemdatt Municipality, Ward 04',
@@ -2275,6 +2282,40 @@ const isExpiredByAge = (createdAtMs: number | null, ttlMs: number) =>
 
 const filterActiveOrders = (ordersList: Order[]) =>
   ordersList.filter((order) => !isExpiredByAge(getRecordCreatedAtMs(order), ORDER_TTL_MS));
+
+const validateCustomerName = (value: string) =>
+  /^[\p{L}\s.'-]{2,}$/u.test(value.trim());
+
+const validatePhoneNumber = (value: string) =>
+  /^\+?[0-9]{7,15}$/.test(value.trim());
+
+const validateDeliveryDetails = (deliveryDetails: DeliveryDetails) => {
+  const errors: { [key: string]: string } = {};
+
+  if (!validateCustomerName(deliveryDetails.fullName)) {
+    errors.fullName = 'Please enter a valid full name';
+  }
+
+  if (!validatePhoneNumber(deliveryDetails.phone)) {
+    errors.phone = 'Please enter a valid phone number';
+  }
+
+  if (deliveryDetails.deliveryMethod !== 'pickup') {
+    if (!deliveryDetails.address.trim() || deliveryDetails.address.trim().length < 8) {
+      errors.address = 'Please enter a complete delivery address';
+    }
+  }
+
+  return errors;
+};
+
+const getPaymentStatusLabel = (order: Pick<Order, 'paymentMethod' | 'paymentStatus'>) => {
+  if (order.paymentMethod === 'cod' && order.paymentStatus === 'unpaid') {
+    return 'Pending Payment (COD)';
+  }
+
+  return order.paymentStatus === 'paid' ? 'Paid' : 'Unpaid';
+};
 
 const readStoredCart = (storageKey: string): StoredCartRecord | null => {
   if (typeof window === 'undefined') return null;
@@ -2398,8 +2439,12 @@ export default function App() {
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [paymentStep, setPaymentStep] = useState<'details' | 'success'>('details');
   const [simulatedOrder, setSimulatedOrder] = useState<Order | null>(null);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const userOrdersRawRef = useRef<Order[]>([]);
   const allOrdersRawRef = useRef<Order[]>([]);
+  const lastOrderSubmissionAtRef = useRef(0);
+  const lastSignInAttemptAtRef = useRef(0);
   const isAnyDialogOpen =
     isAuthOpen ||
     isOrderModalOpen ||
@@ -2733,6 +2778,12 @@ export default function App() {
   }, []);
 
   const handleSignIn = async () => {
+    if (isSigningIn || shouldThrottleAction(lastSignInAttemptAtRef, SIGN_IN_RATE_LIMIT_MS)) {
+      toast.error('Please wait a few seconds before trying Google sign-in again.');
+      return;
+    }
+
+    setIsSigningIn(true);
     try {
       await signInWithPopup(auth, googleProvider);
       setIsAuthOpen(false);
@@ -2754,6 +2805,8 @@ export default function App() {
       toast.error(message, {
         duration: 6000
       });
+    } finally {
+      setIsSigningIn(false);
     }
   };
 
@@ -2792,10 +2845,25 @@ export default function App() {
     setPrevCancelledCount(currentCancelledCount);
   }, [allOrders, isAdmin]);
 
+  const shouldThrottleAction = (lastAttemptRef: React.MutableRefObject<number>, cooldownMs: number) => {
+    const now = Date.now();
+    if (now - lastAttemptRef.current < cooldownMs) {
+      return true;
+    }
+
+    lastAttemptRef.current = now;
+    return false;
+  };
+
 
   const handleSignOut = async () => {
-    await signOut(auth);
-    toast.success('Signed out successfully!');
+    try {
+      await signOut(auth);
+      toast.success('Signed out successfully!');
+    } catch (error) {
+      console.error('Sign-out Error:', error);
+      toast.error('Failed to sign out safely. Please try again.');
+    }
   };
 
   const addToCart = (product: Product) => {
@@ -2881,6 +2949,10 @@ export default function App() {
   const handleCheckout = (method?: 'esewa' | 'khalti' | 'cod') => {
     if (!user) {
       setIsAuthOpen(true);
+      return;
+    }
+    if (cart.length === 0 || totalAmount <= 0) {
+      toast.error('Your cart is empty. Add an item before checkout.');
       return;
     }
     const checkoutNow = new Date();
@@ -3031,12 +3103,14 @@ export default function App() {
 
   const processPayment = async (method: 'esewa' | 'khalti' | 'cod') => {
     if (!user) return;
+    if (isSubmittingOrder) return;
+    if (cart.length === 0 || totalAmount <= 0) {
+      toast.error('Your cart is empty. Add at least one cake before ordering.');
+      return;
+    }
 
     // Validation
-    const errors: { [key: string]: string } = {};
-    if (!deliveryDetails.fullName.trim()) errors.fullName = 'Full Name is required';
-    if (!deliveryDetails.phone.trim()) errors.phone = 'Phone Number is required';
-    if (deliveryDetails.deliveryMethod !== 'pickup' && !deliveryDetails.address.trim()) errors.address = 'Delivery Address is required';
+    const errors = validateDeliveryDetails(deliveryDetails);
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
@@ -3049,6 +3123,12 @@ export default function App() {
 
     if (method === 'cod') {
       // Direct order creation for COD
+      if (shouldThrottleAction(lastOrderSubmissionAtRef, ORDER_SUBMISSION_COOLDOWN_MS)) {
+        toast.error('Please wait a moment before placing another order.');
+        return;
+      }
+
+      setIsSubmittingOrder(true);
       try {
         const readableId = generateReadableId();
         const createdAtMs = Date.now();
@@ -3065,7 +3145,7 @@ export default function App() {
             { 
               status: 'pending', 
               timestamp: new Date().toISOString(), 
-              message: 'Order placed with Cash on Delivery.' 
+              message: 'Order placed with Cash on Delivery. Payment is pending on delivery.' 
             }
           ],
           createdAt: serverTimestamp(),
@@ -3082,12 +3162,12 @@ export default function App() {
         setSimulatedOrder(fullOrder);
         setPaymentStep('success');
         setIsSimulatingPayment(true);
-        toast.success('Order placed successfully! Pay on delivery.');
+        toast.success('Order placed successfully! Payment is pending on delivery.');
 
         // Notify Admin
-        addDoc(collection(db, 'notifications'), {
+        await addDoc(collection(db, 'notifications'), {
           userId: 'admin',
-          message: `NEW COD: ${readableId} from ${deliveryDetails.fullName}.`,
+          message: `NEW COD: ${readableId} from ${deliveryDetails.fullName}. Pending payment on delivery.`,
           type: 'targeted',
           read: false,
           createdAt: serverTimestamp(),
@@ -3095,7 +3175,10 @@ export default function App() {
         });
 
       } catch (error) {
-        toast.error('Order failed. Check details.');
+        console.error('COD order creation failed:', error);
+        toast.error('Order failed. Please check your details and try again.');
+      } finally {
+        setIsSubmittingOrder(false);
       }
     } else {
       // Show simulation screen FIRST for online payments
@@ -3107,7 +3190,27 @@ export default function App() {
   };
 
   const finalizeOnlinePayment = async () => {
-    if (!user || !paymentMethod) return;
+    if (!user || !paymentMethod || paymentMethod === 'cod' || isSubmittingOrder) return;
+    if (cart.length === 0 || totalAmount <= 0) {
+      toast.error('Your cart is empty. Add at least one cake before ordering.');
+      return;
+    }
+
+    const errors = validateDeliveryDetails(deliveryDetails);
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      setIsSimulatingPayment(false);
+      setIsOrderModalOpen(true);
+      toast.error('Please correct your delivery details before payment.');
+      return;
+    }
+
+    if (shouldThrottleAction(lastOrderSubmissionAtRef, ORDER_SUBMISSION_COOLDOWN_MS)) {
+      toast.error('Please wait a moment before confirming another payment.');
+      return;
+    }
+
+    setIsSubmittingOrder(true);
 
     try {
       const readableId = generateReadableId();
@@ -3141,7 +3244,7 @@ export default function App() {
       setPaymentStep('success');
       
       // Notify Admin
-      addDoc(collection(db, 'notifications'), {
+      await addDoc(collection(db, 'notifications'), {
         userId: 'admin',
         message: `PAID ORDER: ${readableId} via ${paymentMethod.toUpperCase()}.`,
         type: 'targeted',
@@ -3151,7 +3254,10 @@ export default function App() {
       });
 
     } catch (error) {
+      console.error('Online payment finalization failed:', error);
       toast.error('Payment finalized but order creation failed. Contact support.');
+    } finally {
+      setIsSubmittingOrder(false);
     }
   };
 
@@ -3790,12 +3896,14 @@ export default function App() {
                                       </div>
                                       <div className="h-48 w-full rounded-2xl overflow-hidden border border-emerald-deep/10 shadow-inner bg-gray-100 relative">
                                         <iframe
-                                          width="100%"
-                                          height="100%"
+                                          width="600"
+                                          height="450"
+                                          className="h-full w-full"
                                           style={{ border: 0 }}
                                           loading="lazy"
-                                          src={`https://maps.google.com/maps?q=${encodeURIComponent(order.deliveryDetails.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                                          referrerPolicy="no-referrer"
+                                          allowFullScreen
+                                          src={SHOP_MAP_EMBED_SRC}
+                                          referrerPolicy="no-referrer-when-downgrade"
                                         ></iframe>
                                         <div className="absolute bottom-3 left-3 right-3 bg-white/90 backdrop-blur-sm p-3 rounded-xl border border-emerald-deep/5 shadow-sm">
                                           <div className="flex items-center gap-3">
@@ -4039,13 +4147,14 @@ export default function App() {
                 <div className="rounded-[2rem] overflow-hidden border border-white/10 h-32 bg-white/5 p-1 backdrop-blur-sm group shadow-xl">
                   <div className="h-full w-full rounded-[1.8rem] overflow-hidden bg-white/10 relative">
                     <iframe
-                      width="100%"
-                      height="100%"
+                      width="600"
+                      height="450"
+                      className="h-full w-full"
                       style={{ border: 0 }}
                       loading="lazy"
                       allowFullScreen
                       referrerPolicy="no-referrer-when-downgrade"
-                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3514.876735234127!2d80.1764653!3d28.9667821!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39a191f6cc7c39ad%3A0x6b6d61f6c466487!2sBheemdatt!5e0!3m2!1sen!2snp!4v1713280000000!5m2!1sen!2snp"
+                      src={SHOP_MAP_EMBED_SRC}
                     ></iframe>
                   </div>
                 </div>
@@ -4097,6 +4206,7 @@ export default function App() {
             </p>
             <Button 
               className="w-full bg-emerald-deep hover:bg-emerald-deep/90 text-white h-14 sm:h-16 rounded-[1.5rem] sm:rounded-[2rem] font-bold text-[11px] uppercase tracking-[0.25em] shadow-xl shadow-emerald-deep/20 flex items-center justify-center gap-3 transition-all hover:scale-[1.01]" 
+              disabled={isSigningIn}
               onClick={handleSignIn}
             >
               <svg className="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24">
@@ -4425,11 +4535,9 @@ export default function App() {
             </Button>
             <Button 
               className={`flex-[1.2] ${DIALOG_ACTION_PRIMARY}`}
+              disabled={isSubmittingOrder}
               onClick={() => {
-                const errors: { [key: string]: string } = {};
-                if (!deliveryDetails.fullName.trim()) errors.fullName = 'Full Name is required';
-                if (!deliveryDetails.phone.trim()) errors.phone = 'Phone Number is required';
-                if (deliveryDetails.deliveryMethod !== 'pickup' && !deliveryDetails.address.trim()) errors.address = 'Delivery Address is required';
+                const errors = validateDeliveryDetails(deliveryDetails);
                 if (!selectedDateBaseAvailableTimes.includes(deliveryDetails.deliveryTime)) errors.deliveryTime = 'Please select an available delivery time';
 
                 if (Object.keys(errors).length > 0) {
@@ -4541,6 +4649,7 @@ export default function App() {
                 <Button 
                   variant="outline" 
                   className="h-20 sm:h-24 flex-col gap-3 rounded-2xl border-emerald-deep/10 hover:border-emerald-deep/30 hover:bg-emerald-deep/5 transition-all group"
+                  disabled={isSubmittingOrder}
                   onClick={() => {
                     setIsConfirmationOpen(false);
                     processPayment('esewa');
@@ -4554,6 +4663,7 @@ export default function App() {
                 <Button 
                   variant="outline" 
                   className="h-20 sm:h-24 flex-col gap-3 rounded-2xl border-emerald-deep/10 hover:border-emerald-deep/30 hover:bg-emerald-deep/5 transition-all group"
+                  disabled={isSubmittingOrder}
                   onClick={() => {
                     setIsConfirmationOpen(false);
                     processPayment('khalti');
@@ -4567,6 +4677,7 @@ export default function App() {
                 <Button 
                   variant="outline" 
                   className="sm:col-span-2 h-12 sm:h-14 rounded-2xl border-emerald-deep/10 hover:border-emerald-deep/30 hover:bg-emerald-deep/5 transition-all flex items-center justify-center gap-3"
+                  disabled={isSubmittingOrder}
                   onClick={() => {
                     setIsConfirmationOpen(false);
                     processPayment('cod');
@@ -4756,6 +4867,11 @@ export default function App() {
                               <p className="text-[8px] font-bold text-emerald-deep/20 uppercase tracking-widest italic">Destination</p>
                               <p className="text-sm font-medium text-emerald-deep/60 leading-relaxed italic">{order.deliveryDetails.address || 'Boutique Pickup'}</p>
                             </div>
+                            <Separator className="bg-emerald-deep/5" />
+                            <div className="space-y-1">
+                              <p className="text-[8px] font-bold text-emerald-deep/20 uppercase tracking-widest italic">Payment</p>
+                              <p className="text-sm font-medium text-emerald-deep/60 leading-relaxed italic">{getPaymentStatusLabel(order)}</p>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -4926,6 +5042,7 @@ export default function App() {
                 
                 <Button 
                   className={`w-full ${DIALOG_ACTION_BASE} shadow-xl transition-all hover:scale-[1.01] active:scale-[0.98] ${paymentMethod === 'esewa' ? 'bg-[#60bb46] hover:bg-[#52a13b] shadow-[#60bb46]/20 text-white' : 'bg-[#5c2d91] hover:bg-[#4d2678] shadow-[#5c2d91]/20 text-white'}`}
+                  disabled={isSubmittingOrder}
                   onClick={finalizeOnlinePayment}
                 >
                   Confirm & Transfer Collection
@@ -4947,7 +5064,7 @@ export default function App() {
               <div className="space-y-2">
                 <h3 className="text-2xl sm:text-3xl font-heading font-bold text-emerald-deep italic">Masterpiece Secured!</h3>
                 <p className="text-sm text-gray-500 font-medium tracking-tight">
-                  {paymentMethod === 'cod' ? 'Order placed successfully. Pay on delivery.' : 'Transaction completed with the precision of art.'}
+                  {paymentMethod === 'cod' ? 'Order placed successfully. Payment is pending on delivery.' : 'Transaction completed with the precision of art.'}
                 </p>
               </div>
 
@@ -4964,6 +5081,10 @@ export default function App() {
                   <div className="flex justify-between items-center">
                     <span className="text-[10px] font-bold text-emerald-deep/40 uppercase tracking-widest">Date</span>
                     <span className="text-xs font-bold text-emerald-deep">{new Date().toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-emerald-deep/40 uppercase tracking-widest">Payment</span>
+                    <span className="text-xs font-bold text-emerald-deep">{getPaymentStatusLabel(simulatedOrder)}</span>
                   </div>
                 </div>
               )}
