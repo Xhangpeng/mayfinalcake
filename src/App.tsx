@@ -281,7 +281,8 @@ const CartPage = ({
   addToCart,
   clearCart,
   paymentMethod,
-  setPaymentMethod
+  setPaymentMethod,
+  isSubmittingOrder
 }: { 
   cart: OrderItem[], 
   products: Product[], 
@@ -293,7 +294,8 @@ const CartPage = ({
   addToCart: (p: Product) => void,
   clearCart: () => void,
   paymentMethod: 'esewa' | 'khalti' | 'cod',
-  setPaymentMethod: (m: 'esewa' | 'khalti' | 'cod') => void
+  setPaymentMethod: (m: 'esewa' | 'khalti' | 'cod') => void,
+  isSubmittingOrder: boolean
 }) => {
   const [voucherCode, setVoucherCode] = useState('');
 
@@ -1057,38 +1059,39 @@ const AddToCartModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="sm:max-w-[440px] w-[94vw] max-h-[85dvh] flex flex-col rounded-[1.75rem] sm:rounded-[2.25rem] border-none shadow-[0_30px_70px_rgba(0,174,239,0.18)] p-0 overflow-hidden cursor-pointer group bg-white"
+        className="sm:max-w-[380px] w-[90vw] max-h-[78dvh] flex flex-col rounded-[1.5rem] sm:rounded-[2rem] border border-[#d9c7a2]/30 shadow-[0_28px_60px_rgba(15,23,42,0.12)] p-0 overflow-hidden cursor-pointer group bg-[#fffdf8]"
         onClick={(e) => {
           if ((e.target as HTMLElement).closest('button')) return;
           onGoToCart();
         }}
       >
-        <div className="bg-gradient-to-br from-emerald-deep via-emerald-deep to-[#33c5f3] p-5 sm:p-6 text-white text-center space-y-3 relative overflow-hidden shrink-0">
-          <div className="absolute top-0 right-0 h-32 w-32 bg-white/8 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="bg-[linear-gradient(135deg,#fff8ec_0%,#f7efe0_55%,#f1e5d0_100%)] p-4 sm:p-5 text-center space-y-3 relative overflow-hidden shrink-0 border-b border-[#d9c7a2]/25">
+          <div className="absolute top-0 right-0 h-24 w-24 bg-white/45 rounded-full -translate-y-1/2 translate-x-1/3" />
+          <div className="absolute bottom-0 left-0 h-16 w-16 bg-[#d4a85c]/10 rounded-full -translate-x-1/3 translate-y-1/3" />
           <motion.div
             initial={{ scale: 0, rotate: -20 }}
             animate={{ scale: 1, rotate: 0 }}
-            className="mx-auto mb-1 flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-white/20 bg-white/10 shadow-xl backdrop-blur-md sm:h-16 sm:w-16"
+            className="mx-auto mb-1 flex h-12 w-12 items-center justify-center rounded-[1rem] border border-[#d9c7a2]/35 bg-white shadow-lg sm:h-14 sm:w-14"
           >
-            <CheckCircle2 className="h-8 w-8 text-white sm:h-9 sm:w-9" strokeWidth={1.5} />
+            <CheckCircle2 className="h-7 w-7 text-[#b8893d] sm:h-8 sm:w-8" strokeWidth={1.8} />
           </motion.div>
           <div className="space-y-1.5">
-            <h2 className="text-xl sm:text-2xl font-heading font-bold italic tracking-tight uppercase">Added to Collection</h2>
-            <p className="text-white/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.22em]">A sweet pick is waiting in your cart</p>
+            <h2 className="text-lg sm:text-xl font-heading font-bold italic tracking-tight text-[#6c4b16]">Added to Collection</h2>
+            <p className="text-[#9a7b44] text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.18em]">Your cake is now waiting in the cart</p>
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto bg-white p-4 sm:p-5 space-y-5">
-          <div className="flex items-center gap-4 bg-emerald-deep/[0.03] p-4 sm:p-5 rounded-[1.5rem] border border-emerald-deep/5 shadow-inner">
-            <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-[1.25rem] overflow-hidden shrink-0 border border-emerald-deep/10 shadow-lg">
+        <div className="flex-1 min-h-0 overflow-y-auto bg-[#fffdf8] p-3.5 sm:p-4 space-y-4">
+          <div className="flex items-center gap-3 bg-white p-3.5 sm:p-4 rounded-[1.25rem] border border-[#e8dcc4] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+            <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-[1rem] overflow-hidden shrink-0 border border-[#eadfca] shadow-sm">
               <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" referrerPolicy="no-referrer" />
             </div>
-            <div className="flex-1 min-w-0 space-y-2">
-              <h4 className="font-heading font-bold text-emerald-deep text-lg sm:text-xl leading-tight italic break-words">{product.name}</h4>
-              <p className="text-[10px] text-emerald-deep/40 font-bold uppercase tracking-[0.18em]">{product.category}</p>
-              <div className="pt-1 flex items-baseline gap-2">
-                <span className="text-[10px] font-bold text-emerald-deep/20 uppercase tracking-[0.16em] leading-none">Value</span>
-                <span className="font-heading font-bold text-xl sm:text-2xl text-emerald-deep tracking-tighter leading-none italic">Rs. {product.price}</span>
+            <div className="flex-1 min-w-0 space-y-1.5">
+              <h4 className="font-heading font-bold text-[#5a3d12] text-base sm:text-lg leading-tight italic break-words">{product.name}</h4>
+              <p className="text-[10px] text-[#b39157] font-bold uppercase tracking-[0.14em]">{product.category}</p>
+              <div className="pt-0.5 flex items-baseline gap-2">
+                <span className="text-[9px] font-bold text-[#b39157] uppercase tracking-[0.14em] leading-none">Value</span>
+                <span className="font-heading font-bold text-lg sm:text-xl text-[#8f6523] tracking-tight leading-none italic">Rs. {product.price}</span>
               </div>
             </div>
           </div>
@@ -1096,13 +1099,13 @@ const AddToCartModal = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <Button
               variant="outline"
-              className={DIALOG_ACTION_OUTLINE}
+              className="min-h-[3rem] rounded-[1rem] border-[#d9c7a2] bg-transparent px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8b6a33] hover:bg-[#f6efe1]"
               onClick={onClose}
             >
               Continue Exploring
             </Button>
             <Button
-              className={DIALOG_ACTION_PRIMARY}
+              className="min-h-[3rem] rounded-[1rem] bg-[#c7923e] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-white shadow-[0_14px_30px_rgba(199,146,62,0.28)] hover:bg-[#b78334]"
               onClick={onGoToCart}
             >
               Go to Cart
@@ -3369,7 +3372,7 @@ export default function App() {
           user={user} 
           cartCount={cart.length} 
           onOpenCart={() => {
-            setActiveView('cart');
+            navigate('/cart');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           onOpenAuth={() => setIsAuthOpen(true)}
@@ -3395,7 +3398,7 @@ export default function App() {
           product={notificationProduct}
           onClick={() => {
             setShowCartNotification(false);
-            setActiveView('cart');
+            navigate('/cart');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         />
@@ -3418,7 +3421,7 @@ export default function App() {
                 totalAmount={cart.reduce((acc, item) => acc + (item.price * item.quantity), 0)}
                 onCheckout={() => {
                   setIsCartOpen(false);
-                  setActiveView('cart');
+                  navigate('/cart');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               />
@@ -3432,7 +3435,7 @@ export default function App() {
           product={lastAddedProduct}
           onGoToCart={() => {
             setIsAddToCartModalOpen(false);
-            setActiveView('cart');
+            navigate('/cart');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         />
@@ -3757,6 +3760,7 @@ export default function App() {
                     }}
                     paymentMethod={paymentMethod}
                     setPaymentMethod={setPaymentMethod}
+                    isSubmittingOrder={isSubmittingOrder}
                   />
                 )}
 
@@ -4176,7 +4180,7 @@ export default function App() {
       {activeView !== 'admin' && (
         <BottomNav 
           cartCount={cart.length} 
-          onOpenCart={() => setActiveView('cart')} 
+          onOpenCart={() => navigate('/cart')} 
           onOpenAuth={() => setIsAuthOpen(true)}
           user={user}
           onOpenOrders={() => setActiveView('orders')}
