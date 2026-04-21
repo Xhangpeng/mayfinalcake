@@ -117,10 +117,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Toaster, toast } from 'sonner';
+import { usePWAInstall } from './hooks/usePWAInstall';
 
 // --- Components ---
 
-const Navbar = ({ user, cartCount, onOpenCart, onOpenAuth, onSignOut, isAdmin, onOpenAdmin, onOpenOrders, onOpenProfile, setView }: { 
+const Navbar = ({ user, cartCount, onOpenCart, onOpenAuth, onSignOut, isAdmin, onOpenAdmin, onOpenOrders, onOpenProfile, setView, canInstallPWA, onInstallPWA }: { 
   user: any, 
   cartCount: number, 
   onOpenCart: () => void, 
@@ -130,7 +131,9 @@ const Navbar = ({ user, cartCount, onOpenCart, onOpenAuth, onSignOut, isAdmin, o
   onOpenAdmin: () => void,
   onOpenOrders: () => void,
   onOpenProfile: () => void,
-  setView: (view: any) => void
+  setView: (view: any) => void,
+  canInstallPWA: boolean,
+  onInstallPWA: () => void
 }) => (
   <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-2xl border-b border-emerald-deep/5">
     <div className="container mx-auto px-4 md:px-8 h-20 md:h-24 flex items-center justify-between">
@@ -181,6 +184,20 @@ const Navbar = ({ user, cartCount, onOpenCart, onOpenAuth, onSignOut, isAdmin, o
               </span>
             )}
           </Button>
+
+          <div className="h-8 w-[1px] bg-emerald-deep/10 mx-1 hidden md:block" />
+
+          {canInstallPWA && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-10 w-10 md:h-12 md:w-12 rounded-full text-emerald-deep hover:bg-emerald-deep/10 transition-all animate-pulse"
+              onClick={onInstallPWA}
+              title="Install KOSELI app"
+            >
+              <Download className="h-5 w-5" strokeWidth={1.5} />
+            </Button>
+          )}
 
           <div className="h-8 w-[1px] bg-emerald-deep/10 mx-1 hidden md:block" />
 
@@ -2410,6 +2427,9 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // PWA Install Hook
+  const { canInstall: canInstallPWA, promptInstall } = usePWAInstall();
+
   // Navigation sync
   useEffect(() => {
     const path = location.pathname;
@@ -3341,6 +3361,32 @@ export default function App() {
     });
   }, [products, activeTab, searchQuery]);
 
+  const renderCartPage = (navigateOnExplore: boolean = false) => (
+    <CartPage 
+      cart={cart}
+      products={products}
+      removeFromCart={removeFromCart}
+      updateCartQuantity={updateCartQuantity}
+      totalAmount={totalAmount}
+      onCheckout={handleCheckout}
+      onExplore={() => {
+        setActiveView('menu');
+        if (navigateOnExplore) {
+          navigate('/shop');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }}
+      addToCart={addToCart}
+      clearCart={() => {
+        clearCart();
+        toast.success('Cart cleared');
+      }}
+      paymentMethod={paymentMethod}
+      setPaymentMethod={setPaymentMethod}
+      isSubmittingOrder={isSubmittingOrder}
+    />
+  );
+
   return (
     <div className="min-h-screen bg-white font-sans antialiased flex flex-col">
         <Toaster
@@ -3372,6 +3418,7 @@ export default function App() {
           user={user} 
           cartCount={cart.length} 
           onOpenCart={() => {
+            setActiveView('cart');
             navigate('/cart');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
@@ -3391,6 +3438,8 @@ export default function App() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           setView={setActiveView}
+          canInstallPWA={canInstallPWA}
+          onInstallPWA={promptInstall}
         />
 
         <CartNotification 
@@ -3398,6 +3447,7 @@ export default function App() {
           product={notificationProduct}
           onClick={() => {
             setShowCartNotification(false);
+            setActiveView('cart');
             navigate('/cart');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
@@ -3421,6 +3471,7 @@ export default function App() {
                 totalAmount={cart.reduce((acc, item) => acc + (item.price * item.quantity), 0)}
                 onCheckout={() => {
                   setIsCartOpen(false);
+                  setActiveView('cart');
                   navigate('/cart');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
@@ -3435,6 +3486,7 @@ export default function App() {
           product={lastAddedProduct}
           onGoToCart={() => {
             setIsAddToCartModalOpen(false);
+            setActiveView('cart');
             navigate('/cart');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
@@ -3448,6 +3500,11 @@ export default function App() {
               wishlist={wishlist}
               onToggleWishlist={toggleWishlist}
             />
+          } />
+          <Route path="/cart" element={
+            <main className="container mx-auto px-4 py-8 flex-1 flex flex-col min-h-[90vh]">
+              {renderCartPage(true)}
+            </main>
           } />
           <Route path="/payment-test" element={<PaymentTest />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
@@ -3745,23 +3802,7 @@ export default function App() {
                 )}
 
                 {activeView === 'cart' && (
-                  <CartPage 
-                    cart={cart}
-                    products={products}
-                    removeFromCart={removeFromCart}
-                    updateCartQuantity={updateCartQuantity}
-                    totalAmount={totalAmount}
-                    onCheckout={handleCheckout}
-                    onExplore={() => setActiveView('menu')}
-                    addToCart={addToCart}
-                    clearCart={() => {
-                      clearCart();
-                      toast.success('Cart cleared');
-                    }}
-                    paymentMethod={paymentMethod}
-                    setPaymentMethod={setPaymentMethod}
-                    isSubmittingOrder={isSubmittingOrder}
-                  />
+                  renderCartPage()
                 )}
 
                 {activeView === 'profile' && user && (
@@ -4180,7 +4221,10 @@ export default function App() {
       {activeView !== 'admin' && (
         <BottomNav 
           cartCount={cart.length} 
-          onOpenCart={() => navigate('/cart')} 
+          onOpenCart={() => {
+            setActiveView('cart');
+            navigate('/cart');
+          }} 
           onOpenAuth={() => setIsAuthOpen(true)}
           user={user}
           onOpenOrders={() => setActiveView('orders')}
