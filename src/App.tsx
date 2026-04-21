@@ -1017,20 +1017,20 @@ const CartNotification = ({ product, isOpen, onClick }: { product: Product | nul
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.9 }}
           onClick={onClick}
-          className="fixed bottom-28 md:bottom-8 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-md focus:outline-none group"
+          className="fixed bottom-[6.5rem] md:bottom-8 left-1/2 -translate-x-1/2 z-[100] w-[88%] max-w-sm focus:outline-none group"
         >
-          <div className="bg-emerald-deep/95 backdrop-blur-xl border border-white/20 rounded-[3rem] p-3 shadow-[0_40px_80px_rgba(0,174,239,0.4)] flex items-center justify-between transition-all group-hover:scale-[1.02] active:scale-[0.98]">
-            <div className="flex items-center gap-5 pl-5">
-              <div className="h-14 w-14 rounded-[1.5rem] bg-white/10 flex items-center justify-center border border-white/10 group-hover:bg-white group-hover:text-emerald-deep transition-all duration-500">
-                <ShoppingBag className="h-7 w-7 transition-colors" />
+          <div className="bg-emerald-deep/92 backdrop-blur-xl border border-white/15 rounded-[2rem] p-2.5 shadow-[0_24px_60px_rgba(0,174,239,0.35)] flex items-center justify-between gap-3 transition-all group-hover:scale-[1.02] active:scale-[0.98]">
+            <div className="flex items-center gap-3 pl-2 min-w-0">
+              <div className="h-11 w-11 rounded-[1rem] bg-white/10 flex items-center justify-center border border-white/10 group-hover:bg-white group-hover:text-emerald-deep transition-all duration-500 shrink-0">
+                <ShoppingBag className="h-5 w-5 transition-colors" />
               </div>
-              <div className="flex flex-col text-left">
-                <span className="text-white font-heading font-bold text-xl leading-tight italic">{product.name}</span>
+              <div className="flex min-w-0 flex-col text-left">
+                <span className="truncate text-white font-heading font-bold text-lg leading-tight italic">{product.name}</span>
                 <span className="text-white/50 text-[10px] font-bold uppercase tracking-[0.3em] mt-1">Added to collection • Tap to view</span>
               </div>
             </div>
-            <div className="h-14 w-14 rounded-[1.5rem] bg-white/10 flex items-center justify-center mr-1 group-hover:bg-white group-hover:text-emerald-deep transition-all duration-500">
-              <ArrowRight className="h-7 w-7 transition-colors" />
+            <div className="h-11 w-11 rounded-[1rem] bg-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-emerald-deep transition-all duration-500 shrink-0">
+              <ArrowRight className="h-5 w-5 transition-colors" />
             </div>
           </div>
         </motion.button>
@@ -1055,38 +1055,38 @@ const AddToCartModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="sm:max-w-[480px] w-[96vw] max-h-[90dvh] flex flex-col rounded-[2rem] sm:rounded-[2.75rem] border-none shadow-[0_35px_80px_rgba(0,0,0,0.18)] p-0 overflow-hidden cursor-pointer group"
+        className="sm:max-w-[440px] w-[94vw] max-h-[85dvh] flex flex-col rounded-[1.75rem] sm:rounded-[2.25rem] border-none shadow-[0_30px_70px_rgba(0,174,239,0.18)] p-0 overflow-hidden cursor-pointer group bg-white"
         onClick={(e) => {
           if ((e.target as HTMLElement).closest('button')) return;
           onGoToCart();
         }}
       >
-        <div className="bg-emerald-deep p-6 sm:p-8 md:p-10 text-white text-center space-y-4 relative overflow-hidden shrink-0">
-          <div className="absolute top-0 right-0 h-40 w-40 sm:h-44 sm:w-44 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="bg-gradient-to-br from-emerald-deep via-emerald-deep to-[#33c5f3] p-5 sm:p-6 text-white text-center space-y-3 relative overflow-hidden shrink-0">
+          <div className="absolute top-0 right-0 h-32 w-32 bg-white/8 rounded-full -translate-y-1/2 translate-x-1/2" />
           <motion.div
             initial={{ scale: 0, rotate: -20 }}
             animate={{ scale: 1, rotate: 0 }}
-            className="mx-auto mb-2 sm:mb-4 flex h-16 w-16 items-center justify-center rounded-[1.5rem] border border-white/20 bg-white/10 shadow-2xl backdrop-blur-md sm:h-20 sm:w-20 md:h-24 md:w-24 sm:rounded-[2rem]"
+            className="mx-auto mb-1 flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-white/20 bg-white/10 shadow-xl backdrop-blur-md sm:h-16 sm:w-16"
           >
-            <CheckCircle2 className="h-9 w-9 text-white sm:h-11 sm:w-11 md:h-14 md:w-14" strokeWidth={1.5} />
+            <CheckCircle2 className="h-8 w-8 text-white sm:h-9 sm:w-9" strokeWidth={1.5} />
           </motion.div>
-          <div className="space-y-2">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold italic tracking-tight uppercase">Exquisite Choice</h2>
-            <p className="text-white/60 text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-[0.35em]">This masterpiece was added to cart</p>
+          <div className="space-y-1.5">
+            <h2 className="text-xl sm:text-2xl font-heading font-bold italic tracking-tight uppercase">Added to Collection</h2>
+            <p className="text-white/70 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.22em]">A sweet pick is waiting in your cart</p>
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto bg-white p-5 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 bg-emerald-deep/[0.03] p-5 sm:p-6 rounded-[2rem] sm:rounded-[2.5rem] border border-emerald-deep/5 shadow-inner">
-            <div className="h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden shrink-0 border border-emerald-deep/10 shadow-2xl">
+        <div className="flex-1 min-h-0 overflow-y-auto bg-white p-4 sm:p-5 space-y-5">
+          <div className="flex items-center gap-4 bg-emerald-deep/[0.03] p-4 sm:p-5 rounded-[1.5rem] border border-emerald-deep/5 shadow-inner">
+            <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-[1.25rem] overflow-hidden shrink-0 border border-emerald-deep/10 shadow-lg">
               <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" referrerPolicy="no-referrer" />
             </div>
-            <div className="flex-1 space-y-3">
-              <h4 className="font-heading font-bold text-emerald-deep text-xl sm:text-2xl md:text-3xl leading-tight italic">{product.name}</h4>
-              <p className="text-[10px] md:text-xs text-emerald-deep/40 font-bold uppercase tracking-[0.25em]">{product.category}</p>
-              <div className="pt-2 sm:pt-3 flex items-baseline gap-2">
-                <span className="text-sm font-bold text-emerald-deep/20 uppercase tracking-widest leading-none">Value</span>
-                <span className="font-heading font-bold text-2xl sm:text-3xl md:text-4xl text-emerald-deep tracking-tighter leading-none italic">Rs. {product.price}</span>
+            <div className="flex-1 min-w-0 space-y-2">
+              <h4 className="font-heading font-bold text-emerald-deep text-lg sm:text-xl leading-tight italic break-words">{product.name}</h4>
+              <p className="text-[10px] text-emerald-deep/40 font-bold uppercase tracking-[0.18em]">{product.category}</p>
+              <div className="pt-1 flex items-baseline gap-2">
+                <span className="text-[10px] font-bold text-emerald-deep/20 uppercase tracking-[0.16em] leading-none">Value</span>
+                <span className="font-heading font-bold text-xl sm:text-2xl text-emerald-deep tracking-tighter leading-none italic">Rs. {product.price}</span>
               </div>
             </div>
           </div>
@@ -3234,7 +3234,22 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white font-sans antialiased flex flex-col">
-        <Toaster position="bottom-center" />
+        <Toaster
+          position="bottom-center"
+          toastOptions={{
+            className:
+              '!bg-white !text-emerald-deep !border !border-emerald-deep/10 !rounded-2xl !shadow-[0_18px_50px_rgba(0,174,239,0.16)]',
+            descriptionClassName: '!text-emerald-deep/60',
+            actionButtonStyle: {
+              background: '#00adef',
+              color: '#ffffff'
+            },
+            cancelButtonStyle: {
+              background: '#eff8ff',
+              color: '#0084b5'
+            }
+          }}
+        />
         
         <SearchOverlay 
           isOpen={activeView === 'search'}
@@ -4234,10 +4249,10 @@ export default function App() {
                 <div className="grid gap-4">
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-deep/50">Method</Label>
-                    <div className="flex flex-col sm:flex-row gap-2 p-1 bg-slate-50 rounded-xl border border-emerald-deep/10">
+                    <div className="grid grid-cols-2 gap-2 p-1 bg-slate-50 rounded-[1rem] border border-emerald-deep/10">
                       <Button 
                         variant="ghost"
-                        className={`flex-1 rounded-lg font-bold uppercase tracking-[0.12em] text-[10px] transition-all h-10 sm:h-11 ${deliveryDetails.deliveryMethod === 'delivery' ? 'bg-white text-emerald-deep shadow-sm' : 'text-emerald-deep/45 hover:text-emerald-deep/70'}`}
+                        className={`w-full rounded-xl font-bold uppercase tracking-[0.12em] text-[10px] transition-all h-11 ${deliveryDetails.deliveryMethod === 'delivery' ? 'bg-white text-emerald-deep shadow-sm border border-emerald-deep/10' : 'text-emerald-deep/45 hover:text-emerald-deep/70 bg-transparent'}`}
                         onClick={() => {
                           setDeliveryDetails({...deliveryDetails, deliveryMethod: 'delivery'});
                           clearFormError('address');
@@ -4247,7 +4262,7 @@ export default function App() {
                       </Button>
                       <Button 
                         variant="ghost"
-                        className={`flex-1 rounded-lg font-bold uppercase tracking-[0.12em] text-[10px] transition-all h-10 sm:h-11 ${deliveryDetails.deliveryMethod === 'pickup' ? 'bg-white text-emerald-deep shadow-sm' : 'text-emerald-deep/45 hover:text-emerald-deep/70'}`}
+                        className={`w-full rounded-xl font-bold uppercase tracking-[0.12em] text-[10px] transition-all h-11 ${deliveryDetails.deliveryMethod === 'pickup' ? 'bg-white text-emerald-deep shadow-sm border border-emerald-deep/10' : 'text-emerald-deep/45 hover:text-emerald-deep/70 bg-transparent'}`}
                         onClick={() => {
                           setDeliveryDetails({...deliveryDetails, deliveryMethod: 'pickup'});
                           clearFormError('address');
@@ -5003,13 +5018,13 @@ export default function App() {
         </DialogContent>
       </Dialog>
       <AnimatePresence>
-        {showBackToTop && !isAnyDialogOpen && (
+        {showBackToTop && !isAnyDialogOpen && !showCartNotification && (
           <motion.button
             initial={{ opacity: 0, scale: 0, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0, y: 20 }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-[7.75rem] left-4 md:left-auto md:bottom-12 md:right-12 h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 bg-white text-emerald-deep rounded-full shadow-[0_20px_50px_rgba(0,174,239,0.3)] flex items-center justify-center z-[100] hover:scale-110 active:scale-95 transition-all border border-emerald-deep/10"
+            className="fixed bottom-[8.25rem] right-4 md:bottom-12 md:right-12 h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 bg-white text-emerald-deep rounded-full shadow-[0_20px_50px_rgba(0,174,239,0.3)] flex items-center justify-center z-[100] hover:scale-110 active:scale-95 transition-all border border-emerald-deep/10"
           >
             <ArrowUp className="h-6 w-6" strokeWidth={3} />
           </motion.button>
